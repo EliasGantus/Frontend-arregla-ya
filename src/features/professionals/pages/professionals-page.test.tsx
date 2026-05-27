@@ -4,7 +4,11 @@ import type { PropsWithChildren } from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 
 import { useAuth } from '@/features/auth/context/auth-context';
-import { ProfessionalProfilePage, ProfessionalsPage } from '@/features/professionals/pages/professionals-page';
+import {
+  ProfessionalBookingPage,
+  ProfessionalProfilePage,
+  ProfessionalsPage,
+} from '@/features/professionals/pages/professionals-page';
 import { professionalsService } from '@/features/professionals/services/professionals-service';
 import { categoriesService } from '@/features/service-requests/services/categories-service';
 import type { ProfessionalSearchResult } from '@/shared/types/api';
@@ -76,6 +80,7 @@ const renderSearch = () =>
         <Routes>
           <Route path="/app/profesionales" element={<ProfessionalsPage />} />
           <Route path="/app/profesionales/:professionalId" element={<ProfessionalProfilePage />} />
+          <Route path="/app/profesionales/:professionalId/reservar" element={<ProfessionalBookingPage />} />
         </Routes>
       </MemoryRouter>
     </TestProviders>,
@@ -179,6 +184,12 @@ describe('ProfessionalsPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Ver perfil de Ana Ruiz' }));
 
     await waitFor(() => expect(screen.getByText('Perfil de Ana Ruiz')).toBeInTheDocument());
+    expect(screen.getByText('Fotos de servicios recientes')).toBeInTheDocument();
     expect(await screen.findByText('Trabajo prolijo y puntual.')).toBeInTheDocument();
+    expect(screen.getByText('5/5 estrellas')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Reservar' }));
+
+    expect(await screen.findByText('Reserva con Ana Ruiz')).toBeInTheDocument();
+    expect(screen.getByText('Fecha tentativa')).toBeInTheDocument();
   });
 });

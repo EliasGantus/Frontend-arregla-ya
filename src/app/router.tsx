@@ -8,7 +8,11 @@ import { AdminPage } from '@/features/admin/pages/admin-page';
 import { DashboardPage } from '@/features/auth/pages/dashboard-page';
 import { LoginPage } from '@/features/auth/pages/login-page';
 import { ProfilePage } from '@/features/profile/pages/profile-page';
-import { ProfessionalProfilePage, ProfessionalsPage } from '@/features/professionals/pages/professionals-page';
+import {
+  ProfessionalBookingPage,
+  ProfessionalProfilePage,
+  ProfessionalsPage,
+} from '@/features/professionals/pages/professionals-page';
 import { QuotesPage } from '@/features/quotes/pages/quotes-page';
 import { ServiceRequestsPage } from '@/features/service-requests/pages/service-requests-page';
 
@@ -54,6 +58,10 @@ export const router = createBrowserRouter([
               {
                 path: 'profesionales/:professionalId',
                 element: <ProfessionalProfilePage />,
+              },
+              {
+                path: 'profesionales/:professionalId/reservar',
+                element: <ProfessionalBookingPage />,
               },
             ],
           },
