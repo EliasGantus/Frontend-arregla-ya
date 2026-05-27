@@ -24,6 +24,7 @@ describe('route guards', () => {
       isAuthenticated: false,
       isBootstrapping: false,
       login: vi.fn(),
+      register: vi.fn(),
       logout: vi.fn(),
       updateUser: vi.fn(),
     });
@@ -55,6 +56,7 @@ describe('route guards', () => {
       isAuthenticated: true,
       isBootstrapping: false,
       login: vi.fn(),
+      register: vi.fn(),
       logout: vi.fn(),
       updateUser: vi.fn(),
     });
@@ -85,6 +87,7 @@ describe('route guards', () => {
       isAuthenticated: true,
       isBootstrapping: false,
       login: vi.fn(),
+      register: vi.fn(),
       logout: vi.fn(),
       updateUser: vi.fn(),
     });

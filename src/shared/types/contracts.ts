@@ -5,6 +5,13 @@ export const loginSchema = z.object({
   password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres.'),
 });
 
+export const registerSchema = loginSchema.extend({
+  fullName: z.string().min(3, 'Ingresa tu nombre completo.'),
+  role: z.enum(['cliente', 'profesional'], {
+    required_error: 'Selecciona el tipo de cuenta.',
+  }),
+});
+
 export const serviceRequestSchema = z.object({
   title: z.string().min(4, 'Describe mejor el trabajo.'),
   description: z.string().min(12, 'Agrega más detalle para los profesionales.'),
@@ -27,6 +34,7 @@ export const profileSchema = z.object({
 });
 
 export type LoginFormValues = z.infer<typeof loginSchema>;
+export type RegisterFormValues = z.infer<typeof registerSchema>;
 export type ServiceRequestFormValues = z.infer<typeof serviceRequestSchema>;
 export type QuoteFormValues = z.infer<typeof quoteSchema>;
 export type ProfileFormValues = z.infer<typeof profileSchema>;

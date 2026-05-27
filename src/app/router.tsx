@@ -21,6 +21,10 @@ export const router = createBrowserRouter([
     element: <LoginPage />,
   },
   {
+    path: '/registro',
+    element: <LoginPage initialMode="register" />,
+  },
+  {
     element: <AuthGuard />,
     children: [
       {

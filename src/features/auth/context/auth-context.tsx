@@ -10,7 +10,7 @@ import {
 import { authService } from '@/features/auth/services/auth-service';
 import { configureHttpClient } from '@/shared/api/http-client';
 import { sessionStorageManager } from '@/shared/lib/storage';
-import type { AuthUser, LoginInput, SessionPayload } from '@/shared/types/api';
+import type { AuthUser, LoginInput, RegisterInput, SessionPayload } from '@/shared/types/api';
 
 interface AuthContextValue {
   user: AuthUser | null;
@@ -19,6 +19,7 @@ interface AuthContextValue {
   isAuthenticated: boolean;
   isBootstrapping: boolean;
   login: (values: LoginInput) => Promise<void>;
+  register: (values: RegisterInput) => Promise<void>;
   logout: () => Promise<void>;
   updateUser: (user: AuthUser) => void;
 }
@@ -63,7 +64,7 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
           });
 
           persistSession({
-            user: session.user!,
+            user: session.user,
             accessToken: refreshed.accessToken,
             refreshToken: refreshed.refreshToken ?? session.refreshToken,
           });
@@ -87,6 +88,10 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
     isBootstrapping,
     login: async (values) => {
       const payload = await authService.login(values);
+      persistSession(payload);
+    },
+    register: async (values) => {
+      const payload = await authService.register(values);
       persistSession(payload);
     },
     logout: async () => {

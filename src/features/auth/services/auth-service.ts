@@ -1,9 +1,17 @@
 import { env } from '@/shared/config/env';
 import { ApiError } from '@/shared/api/api-error';
 import { httpClient } from '@/shared/api/http-client';
-import type { AuthUser, LoginInput, RefreshInput, SessionPayload, UserRole } from '@/shared/types/api';
+import type {
+  AuthUser,
+  LoginInput,
+  RefreshInput,
+  RegisterInput,
+  SessionPayload,
+  UserRole,
+} from '@/shared/types/api';
 
-interface LoginResponse extends SessionPayload {}
+type LoginResponse = SessionPayload;
+type RegisterResponse = SessionPayload;
 
 const demoUsers: Record<UserRole, AuthUser> = {
   cliente: {
@@ -58,6 +66,26 @@ const maybeLoginWithDevMode = (credentials: LoginInput) => {
 };
 
 export const authService = {
+  async register(payload: RegisterInput) {
+    try {
+      return await httpClient.post<RegisterResponse>('/auth/register', payload, { auth: false });
+    } catch (error) {
+      if (env.enableDevAuth) {
+        return Promise.resolve({
+          user: {
+            ...demoUsers[payload.role],
+            email: payload.email,
+            fullName: payload.fullName,
+            role: payload.role,
+          },
+          accessToken: `demo-access-${payload.role}`,
+          refreshToken: `demo-refresh-${payload.role}`,
+        });
+      }
+
+      throw error;
+    }
+  },
   async login(credentials: LoginInput) {
     try {
       return await httpClient.post<LoginResponse>('/auth/login', credentials, { auth: false });
