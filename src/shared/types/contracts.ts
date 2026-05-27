@@ -21,6 +21,12 @@ export const serviceRequestSchema = z.object({
   budget: z.string().optional(),
 });
 
+export const professionalSearchSchema = z.object({
+  categoryId: z.string().min(1, 'Selecciona una especialidad.'),
+  zone: z.string().min(2, 'Ingresa una zona o barrio.'),
+  availableNow: z.boolean(),
+});
+
 export const quoteSchema = z.object({
   serviceRequestId: z.string().min(1),
   amount: z.string().min(1, 'Ingresa un monto estimado.'),
@@ -36,5 +42,6 @@ export const profileSchema = z.object({
 export type LoginFormValues = z.infer<typeof loginSchema>;
 export type RegisterFormValues = z.infer<typeof registerSchema>;
 export type ServiceRequestFormValues = z.infer<typeof serviceRequestSchema>;
+export type ProfessionalSearchFormValues = z.infer<typeof professionalSearchSchema>;
 export type QuoteFormValues = z.infer<typeof quoteSchema>;
 export type ProfileFormValues = z.infer<typeof profileSchema>;

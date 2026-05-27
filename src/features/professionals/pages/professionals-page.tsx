@@ -1,0 +1,338 @@
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useQuery } from '@tanstack/react-query';
+import { useMemo, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
+
+import { useAuth } from '@/features/auth/context/auth-context';
+import { professionalsService } from '@/features/professionals/services/professionals-service';
+import { categoriesService } from '@/features/service-requests/services/categories-service';
+import { ApiError } from '@/shared/api/api-error';
+import type { ProfessionalSearchFilters, ProfessionalSearchResult } from '@/shared/types/api';
+import {
+  professionalSearchSchema,
+  type ProfessionalSearchFormValues,
+} from '@/shared/types/contracts';
+import { Badge } from '@/shared/ui/badge';
+import { Button } from '@/shared/ui/button';
+import { Card } from '@/shared/ui/card';
+import { Input } from '@/shared/ui/input';
+import { Select } from '@/shared/ui/select';
+import { StatusPanel } from '@/shared/ui/status-panel';
+
+export const ProfessionalsPage = () => <ProfessionalsSearchContent />;
+
+const formatRating = (rating: number) =>
+  new Intl.NumberFormat('es-AR', {
+    maximumFractionDigits: 1,
+    minimumFractionDigits: 1,
+  }).format(rating);
+
+const sortByScore = (professionals: ProfessionalSearchResult[]) =>
+  [...professionals].sort((first, second) => {
+    if (second.ratingAverage !== first.ratingAverage) {
+      return second.ratingAverage - first.ratingAverage;
+    }
+
+    if (second.ratingCount !== first.ratingCount) {
+      return second.ratingCount - first.ratingCount;
+    }
+
+    return first.fullName.localeCompare(second.fullName);
+  });
+
+const ProfessionalsSearchContent = () => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const [filters, setFilters] = useState<ProfessionalSearchFilters | null>(null);
+  const categoriesQuery = useQuery({
+    queryKey: ['categories'],
+    queryFn: () => categoriesService.list(),
+  });
+  const professionalsQuery = useQuery({
+    queryKey: ['professionals', 'search', filters],
+    queryFn: () => professionalsService.search(filters ?? {}),
+    enabled: Boolean(filters),
+  });
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<ProfessionalSearchFormValues>({
+    resolver: zodResolver(professionalSearchSchema),
+    defaultValues: {
+      categoryId: '',
+      zone: user?.zone ?? '',
+      availableNow: false,
+    },
+  });
+  const professionals = useMemo(
+    () => sortByScore(professionalsQuery.data ?? []),
+    [professionalsQuery.data],
+  );
+  const hasSearched = Boolean(filters);
+
+  const submitSearch = (values: ProfessionalSearchFormValues) => {
+    setFilters({
+      categoryId: values.categoryId,
+      zone: values.zone.trim(),
+      availableAt: values.availableNow ? new Date().toISOString() : undefined,
+    });
+  };
+
+  return (
+    <div className="space-y-6">
+      <StatusPanel
+        eyebrow="Profesionales"
+        title="Busqueda por especialidad, zona y disponibilidad"
+        description="Filtra profesionales activos, compara puntaje y resenas, y entra al perfil para validar si encaja con tu necesidad."
+      />
+
+      {categoriesQuery.error instanceof ApiError || professionalsQuery.error instanceof ApiError ? (
+        <Card className="border border-amber-200 bg-amber-50">
+          <p className="text-sm font-semibold text-amber-800">Backend no disponible</p>
+          <p className="mt-2 text-sm text-amber-700">
+            {(professionalsQuery.error instanceof ApiError && professionalsQuery.error.message) ||
+              (categoriesQuery.error instanceof ApiError && categoriesQuery.error.message)}
+          </p>
+        </Card>
+      ) : null}
+
+      <Card>
+        <form
+          className="grid gap-4 lg:grid-cols-[1fr_1fr_auto]"
+          onSubmit={(event) => void handleSubmit(submitSearch)(event)}
+        >
+          <label className="space-y-2">
+            <span className="text-sm font-semibold text-slate-700">Especialidad</span>
+            <Select error={errors.categoryId?.message} {...register('categoryId')}>
+              <option value="">Selecciona una especialidad</option>
+              {categoriesQuery.data?.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </Select>
+          </label>
+
+          <label className="space-y-2">
+            <span className="text-sm font-semibold text-slate-700">Zona</span>
+            <Input placeholder="Palermo" error={errors.zone?.message} {...register('zone')} />
+          </label>
+
+          <div className="flex flex-col justify-end gap-3">
+            <label className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700">
+              <input
+                className="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+                type="checkbox"
+                {...register('availableNow')}
+              />
+              Disponible ahora
+            </label>
+            <Button type="submit" disabled={professionalsQuery.isFetching}>
+              {professionalsQuery.isFetching ? 'Buscando...' : 'Buscar profesionales'}
+            </Button>
+          </div>
+        </form>
+      </Card>
+
+      {!hasSearched ? (
+        <Card>
+          <p className="text-sm font-semibold text-slate-800">Completa los filtros para iniciar la busqueda.</p>
+          <p className="mt-2 text-sm text-slate-600">
+            Los resultados se ordenan por puntaje y cantidad de resenas para que priorices profesionales mejor
+            calificados.
+          </p>
+        </Card>
+      ) : null}
+
+      {hasSearched && !professionalsQuery.isFetching && !professionals.length ? (
+        <Card>
+          <p className="text-sm font-semibold text-slate-800">
+            No encontramos profesionales disponibles para esos filtros.
+          </p>
+          <p className="mt-2 text-sm text-slate-600">
+            Amplia la zona, cambia la especialidad o quita la disponibilidad inmediata para ver mas opciones.
+          </p>
+        </Card>
+      ) : null}
+
+      <div className="grid gap-4 xl:grid-cols-2">
+        {professionals.map((professional) => (
+          <Card key={professional.id} className="flex flex-col justify-between gap-5">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <h3 className="text-xl font-bold text-slate-950">{professional.fullName}</h3>
+                <p className="mt-1 text-sm text-slate-500">
+                  {professional.city ?? 'Ciudad sin cargar'} - {professional.zone ?? 'Zona sin cargar'}
+                </p>
+              </div>
+              <Badge>{professional.available ? 'Disponible' : 'Con agenda'}</Badge>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              {professional.specialties.map((specialty) => (
+                <span
+                  className="rounded-full bg-brand-50 px-3 py-1 text-xs font-semibold text-brand-700"
+                  key={specialty.id}
+                >
+                  {specialty.name}
+                </span>
+              ))}
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="rounded-2xl bg-slate-50 px-4 py-3">
+                <p className="text-xs font-semibold uppercase text-slate-400">Puntaje</p>
+                <p className="mt-1 text-2xl font-black text-slate-950">
+                  {formatRating(professional.ratingAverage)}
+                </p>
+              </div>
+              <div className="rounded-2xl bg-slate-50 px-4 py-3">
+                <p className="text-xs font-semibold uppercase text-slate-400">Resenas</p>
+                <p className="mt-1 text-2xl font-black text-slate-950">{professional.ratingCount}</p>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-sm text-slate-600">{professional.email}</p>
+              <Button
+                aria-label={`Ver perfil de ${professional.fullName}`}
+                className="w-full sm:w-auto"
+                onClick={() => {
+                  void navigate(`/app/profesionales/${professional.id}`, {
+                    state: { professional },
+                  });
+                }}
+              >
+                Ver perfil
+              </Button>
+            </div>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+export const ProfessionalProfilePage = () => {
+  const navigate = useNavigate();
+  const { professionalId } = useParams();
+  const location = useLocation();
+  const professionalFromState = (location.state as { professional?: ProfessionalSearchResult } | null)?.professional;
+  const professionalIdValue = professionalId ?? '';
+  const profileQuery = useQuery({
+    queryKey: ['professionals', 'profile', professionalId],
+    queryFn: async () => {
+      const professionals = await professionalsService.search();
+
+      return professionals.find((professional) => professional.id === professionalId);
+    },
+    enabled: Boolean(professionalId && !professionalFromState),
+  });
+  const reviewsQuery = useQuery({
+    queryKey: ['professionals', professionalId, 'reviews'],
+    queryFn: () => professionalsService.reviews(professionalIdValue),
+    enabled: Boolean(professionalId),
+  });
+  const professional = professionalFromState ?? profileQuery.data;
+
+  return (
+    <div className="space-y-6">
+      <StatusPanel
+        eyebrow="Perfil profesional"
+        title={professional ? `Perfil de ${professional.fullName}` : 'Perfil profesional'}
+        description="Informacion de contacto, especialidades, disponibilidad y resenas del profesional seleccionado."
+        actions={
+          <Button
+            variant="ghost"
+            onClick={() => {
+              void navigate('/app/profesionales');
+            }}
+          >
+            Volver al buscador
+          </Button>
+        }
+      />
+
+      {profileQuery.error instanceof ApiError || reviewsQuery.error instanceof ApiError ? (
+        <Card className="border border-amber-200 bg-amber-50">
+          <p className="text-sm font-semibold text-amber-800">No pudimos cargar todo el perfil</p>
+          <p className="mt-2 text-sm text-amber-700">
+            {(profileQuery.error instanceof ApiError && profileQuery.error.message) ||
+              (reviewsQuery.error instanceof ApiError && reviewsQuery.error.message)}
+          </p>
+        </Card>
+      ) : null}
+
+      {!professional && !profileQuery.isLoading ? (
+        <Card>
+          <p className="text-sm font-semibold text-slate-800">No encontramos el profesional solicitado.</p>
+          <p className="mt-2 text-sm text-slate-600">Vuelve al buscador y abre el perfil desde un resultado vigente.</p>
+        </Card>
+      ) : null}
+
+      {professional ? (
+        <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
+          <Card>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <h3 className="text-2xl font-black text-slate-950">{professional.fullName}</h3>
+                <p className="mt-2 text-sm text-slate-600">{professional.email}</p>
+                <p className="mt-1 text-sm text-slate-500">
+                  {professional.city ?? 'Ciudad sin cargar'} - {professional.zone ?? 'Zona sin cargar'}
+                </p>
+              </div>
+              <Badge>{professional.available ? 'Disponible' : 'Con agenda'}</Badge>
+            </div>
+
+            <div className="mt-6 flex flex-wrap gap-2">
+              {professional.specialties.map((specialty) => (
+                <span
+                  className="rounded-full bg-brand-50 px-3 py-1 text-xs font-semibold text-brand-700"
+                  key={specialty.id}
+                >
+                  {specialty.name}
+                </span>
+              ))}
+            </div>
+          </Card>
+
+          <Card>
+            <p className="text-sm font-semibold text-slate-500">Reputacion</p>
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              <div className="rounded-2xl bg-slate-50 px-4 py-3">
+                <p className="text-xs font-semibold uppercase text-slate-400">Puntaje</p>
+                <p className="mt-1 text-3xl font-black text-slate-950">
+                  {formatRating(professional.ratingAverage)}
+                </p>
+              </div>
+              <div className="rounded-2xl bg-slate-50 px-4 py-3">
+                <p className="text-xs font-semibold uppercase text-slate-400">Resenas</p>
+                <p className="mt-1 text-3xl font-black text-slate-950">{professional.ratingCount}</p>
+              </div>
+            </div>
+          </Card>
+        </div>
+      ) : null}
+
+      <div className="grid gap-4">
+        <h3 className="text-lg font-bold text-slate-950">Resenas recientes</h3>
+        {!reviewsQuery.isLoading && !(reviewsQuery.data ?? []).length ? (
+          <Card>
+            <p className="text-sm text-slate-600">Este profesional todavia no tiene resenas publicadas.</p>
+          </Card>
+        ) : null}
+        {(reviewsQuery.data ?? []).map((review) => (
+          <Card key={review.id}>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <p className="font-semibold text-slate-900">{review.clientName}</p>
+              <Badge>{review.rating}/5</Badge>
+            </div>
+            {review.comment ? <p className="mt-3 text-sm text-slate-600">{review.comment}</p> : null}
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+};

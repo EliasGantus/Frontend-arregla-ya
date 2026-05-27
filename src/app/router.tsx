@@ -8,6 +8,7 @@ import { AdminPage } from '@/features/admin/pages/admin-page';
 import { DashboardPage } from '@/features/auth/pages/dashboard-page';
 import { LoginPage } from '@/features/auth/pages/login-page';
 import { ProfilePage } from '@/features/profile/pages/profile-page';
+import { ProfessionalProfilePage, ProfessionalsPage } from '@/features/professionals/pages/professionals-page';
 import { QuotesPage } from '@/features/quotes/pages/quotes-page';
 import { ServiceRequestsPage } from '@/features/service-requests/pages/service-requests-page';
 
@@ -42,6 +43,19 @@ export const router = createBrowserRouter([
           {
             path: 'solicitudes',
             element: <ServiceRequestsPage />,
+          },
+          {
+            element: <RoleGuard allow={['cliente', 'admin']} />,
+            children: [
+              {
+                path: 'profesionales',
+                element: <ProfessionalsPage />,
+              },
+              {
+                path: 'profesionales/:professionalId',
+                element: <ProfessionalProfilePage />,
+              },
+            ],
           },
           {
             element: <RoleGuard allow={['profesional', 'admin']} />,
