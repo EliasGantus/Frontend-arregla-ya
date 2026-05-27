@@ -28,6 +28,7 @@ describe('AppShell', () => {
       isAuthenticated: true,
       isBootstrapping: false,
       login: vi.fn(),
+      register: vi.fn(),
       logout: vi.fn(),
       updateUser: vi.fn(),
     });

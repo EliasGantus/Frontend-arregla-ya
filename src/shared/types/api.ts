@@ -23,6 +23,11 @@ export interface LoginInput {
   password: string;
 }
 
+export interface RegisterInput extends LoginInput {
+  fullName: string;
+  role: Exclude<UserRole, 'admin'>;
+}
+
 export interface RefreshInput {
   refreshToken: string;
 }
