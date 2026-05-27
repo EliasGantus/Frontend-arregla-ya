@@ -38,6 +38,33 @@ export interface CategorySummary {
   slug: string;
 }
 
+export interface ProfessionalSearchResult extends AuthUser {
+  ratingAverage: number;
+  ratingCount: number;
+  available: boolean;
+  specialties: CategorySummary[];
+}
+
+export interface ProfessionalSearchFilters {
+  categoryId?: string;
+  categorySlug?: string;
+  zone?: string;
+  availableAt?: string;
+}
+
+export interface ProfessionalReview {
+  id: string;
+  bookingId: string;
+  serviceRequestId: string;
+  clientId: string;
+  clientName: string;
+  professionalId: string;
+  professionalName: string;
+  rating: number;
+  comment?: string;
+  createdAt: string;
+}
+
 export type ServiceRequestStatus =
   | 'draft'
   | 'open'
