@@ -22,6 +22,66 @@ import { StatusPanel } from '@/shared/ui/status-panel';
 
 export const ProfessionalsPage = () => <ProfessionalsSearchContent />;
 
+interface WorkPhoto {
+  alt: string;
+  src: string;
+  title: string;
+}
+
+const galleryBySpecialty: Record<string, WorkPhoto[]> = {
+  plomeria: [
+    {
+      title: 'Instalacion sanitaria',
+      alt: 'Trabajo de plomeria en cocina',
+      src: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=720&q=80',
+    },
+    {
+      title: 'Reparacion de canerias',
+      alt: 'Herramientas de plomeria sobre una mesada',
+      src: 'https://images.unsplash.com/photo-1504148455328-c376907d081c?auto=format&fit=crop&w=720&q=80',
+    },
+    {
+      title: 'Mantenimiento preventivo',
+      alt: 'Tecnico trabajando en una instalacion domestica',
+      src: 'https://images.unsplash.com/photo-1621905252507-b35492cc74b4?auto=format&fit=crop&w=720&q=80',
+    },
+  ],
+  electricidad: [
+    {
+      title: 'Tablero domiciliario',
+      alt: 'Electricista revisando un tablero',
+      src: 'https://images.unsplash.com/photo-1621905252507-b35492cc74b4?auto=format&fit=crop&w=720&q=80',
+    },
+    {
+      title: 'Instalacion segura',
+      alt: 'Herramientas electricas en banco de trabajo',
+      src: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=720&q=80',
+    },
+    {
+      title: 'Revision de conexiones',
+      alt: 'Tecnico con instrumental de medicion',
+      src: 'https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?auto=format&fit=crop&w=720&q=80',
+    },
+  ],
+  default: [
+    {
+      title: 'Trabajo terminado',
+      alt: 'Profesional preparando herramientas',
+      src: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=720&q=80',
+    },
+    {
+      title: 'Herramientas listas',
+      alt: 'Herramientas ordenadas para una reparacion',
+      src: 'https://images.unsplash.com/photo-1504148455328-c376907d081c?auto=format&fit=crop&w=720&q=80',
+    },
+    {
+      title: 'Servicio en domicilio',
+      alt: 'Persona trabajando en mantenimiento del hogar',
+      src: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=720&q=80',
+    },
+  ],
+};
+
 const formatRating = (rating: number) =>
   new Intl.NumberFormat('es-AR', {
     maximumFractionDigits: 1,
@@ -39,6 +99,27 @@ const sortByScore = (professionals: ProfessionalSearchResult[]) =>
     }
 
     return first.fullName.localeCompare(second.fullName);
+  });
+
+const getPrimarySpecialty = (professional: ProfessionalSearchResult) =>
+  professional.specialties[0]?.name ?? 'Especialidad sin cargar';
+
+const getWorkPhotos = (professional: ProfessionalSearchResult) =>
+  galleryBySpecialty[professional.specialties[0]?.slug ?? ''] ?? galleryBySpecialty.default;
+
+const useProfessionalProfile = (
+  professionalId: string | undefined,
+  professionalFromState: ProfessionalSearchResult | undefined,
+  queryScope: string,
+) =>
+  useQuery({
+    queryKey: ['professionals', queryScope, professionalId],
+    queryFn: async () => {
+      const professionals = await professionalsService.search();
+
+      return professionals.find((professional) => professional.id === professionalId);
+    },
+    enabled: Boolean(professionalId && !professionalFromState),
   });
 
 const ProfessionalsSearchContent = () => {
@@ -221,21 +302,14 @@ export const ProfessionalProfilePage = () => {
   const location = useLocation();
   const professionalFromState = (location.state as { professional?: ProfessionalSearchResult } | null)?.professional;
   const professionalIdValue = professionalId ?? '';
-  const profileQuery = useQuery({
-    queryKey: ['professionals', 'profile', professionalId],
-    queryFn: async () => {
-      const professionals = await professionalsService.search();
-
-      return professionals.find((professional) => professional.id === professionalId);
-    },
-    enabled: Boolean(professionalId && !professionalFromState),
-  });
+  const profileQuery = useProfessionalProfile(professionalId, professionalFromState, 'profile');
   const reviewsQuery = useQuery({
     queryKey: ['professionals', professionalId, 'reviews'],
     queryFn: () => professionalsService.reviews(professionalIdValue),
     enabled: Boolean(professionalId),
   });
   const professional = professionalFromState ?? profileQuery.data;
+  const workPhotos = professional ? getWorkPhotos(professional) : [];
 
   return (
     <div className="space-y-6">
@@ -244,14 +318,28 @@ export const ProfessionalProfilePage = () => {
         title={professional ? `Perfil de ${professional.fullName}` : 'Perfil profesional'}
         description="Informacion de contacto, especialidades, disponibilidad y resenas del profesional seleccionado."
         actions={
-          <Button
-            variant="ghost"
-            onClick={() => {
-              void navigate('/app/profesionales');
-            }}
-          >
-            Volver al buscador
-          </Button>
+          <>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                void navigate('/app/profesionales');
+              }}
+            >
+              Volver al buscador
+            </Button>
+            {professional ? (
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  void navigate(`/app/profesionales/${professional.id}/reservar`, {
+                    state: { professional },
+                  });
+                }}
+              >
+                Reservar
+              </Button>
+            ) : null}
+          </>
         }
       />
 
@@ -273,47 +361,68 @@ export const ProfessionalProfilePage = () => {
       ) : null}
 
       {professional ? (
-        <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
-          <Card>
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-              <div>
-                <h3 className="text-2xl font-black text-slate-950">{professional.fullName}</h3>
-                <p className="mt-2 text-sm text-slate-600">{professional.email}</p>
-                <p className="mt-1 text-sm text-slate-500">
-                  {professional.city ?? 'Ciudad sin cargar'} - {professional.zone ?? 'Zona sin cargar'}
-                </p>
+        <>
+          <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
+            <Card>
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <h3 className="text-2xl font-black text-slate-950">{professional.fullName}</h3>
+                  <p className="mt-2 text-sm font-semibold text-brand-700">{getPrimarySpecialty(professional)}</p>
+                  <p className="mt-2 text-sm text-slate-600">{professional.email}</p>
+                  <p className="mt-1 text-sm text-slate-500">
+                    {professional.city ?? 'Ciudad sin cargar'} - {professional.zone ?? 'Zona sin cargar'}
+                  </p>
+                </div>
+                <Badge>{professional.available ? 'Disponible' : 'Con agenda'}</Badge>
               </div>
-              <Badge>{professional.available ? 'Disponible' : 'Con agenda'}</Badge>
-            </div>
 
-            <div className="mt-6 flex flex-wrap gap-2">
-              {professional.specialties.map((specialty) => (
-                <span
-                  className="rounded-full bg-brand-50 px-3 py-1 text-xs font-semibold text-brand-700"
-                  key={specialty.id}
-                >
-                  {specialty.name}
-                </span>
+              <div className="mt-6 flex flex-wrap gap-2">
+                {professional.specialties.map((specialty) => (
+                  <span
+                    className="rounded-full bg-brand-50 px-3 py-1 text-xs font-semibold text-brand-700"
+                    key={specialty.id}
+                  >
+                    {specialty.name}
+                  </span>
+                ))}
+              </div>
+            </Card>
+
+            <Card>
+              <p className="text-sm font-semibold text-slate-500">Reputacion</p>
+              <div className="mt-4 grid grid-cols-2 gap-3">
+                <div className="rounded-2xl bg-slate-50 px-4 py-3">
+                  <p className="text-xs font-semibold uppercase text-slate-400">Puntaje</p>
+                  <p className="mt-1 text-3xl font-black text-slate-950">
+                    {formatRating(professional.ratingAverage)}
+                  </p>
+                </div>
+                <div className="rounded-2xl bg-slate-50 px-4 py-3">
+                  <p className="text-xs font-semibold uppercase text-slate-400">Resenas</p>
+                  <p className="mt-1 text-3xl font-black text-slate-950">{professional.ratingCount}</p>
+                </div>
+              </div>
+            </Card>
+          </div>
+
+          <Card>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="text-sm font-semibold uppercase text-slate-400">Trabajos realizados</p>
+                <h3 className="mt-1 text-xl font-bold text-slate-950">Fotos de servicios recientes</h3>
+              </div>
+              <Badge>{workPhotos.length} fotos</Badge>
+            </div>
+            <div className="mt-5 grid gap-4 md:grid-cols-3">
+              {workPhotos.map((photo) => (
+                <figure className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50" key={photo.src}>
+                  <img alt={photo.alt} className="h-44 w-full object-cover" src={photo.src} />
+                  <figcaption className="px-4 py-3 text-sm font-semibold text-slate-700">{photo.title}</figcaption>
+                </figure>
               ))}
             </div>
           </Card>
-
-          <Card>
-            <p className="text-sm font-semibold text-slate-500">Reputacion</p>
-            <div className="mt-4 grid grid-cols-2 gap-3">
-              <div className="rounded-2xl bg-slate-50 px-4 py-3">
-                <p className="text-xs font-semibold uppercase text-slate-400">Puntaje</p>
-                <p className="mt-1 text-3xl font-black text-slate-950">
-                  {formatRating(professional.ratingAverage)}
-                </p>
-              </div>
-              <div className="rounded-2xl bg-slate-50 px-4 py-3">
-                <p className="text-xs font-semibold uppercase text-slate-400">Resenas</p>
-                <p className="mt-1 text-3xl font-black text-slate-950">{professional.ratingCount}</p>
-              </div>
-            </div>
-          </Card>
-        </div>
+        </>
       ) : null}
 
       <div className="grid gap-4">
@@ -326,13 +435,109 @@ export const ProfessionalProfilePage = () => {
         {(reviewsQuery.data ?? []).map((review) => (
           <Card key={review.id}>
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <p className="font-semibold text-slate-900">{review.clientName}</p>
-              <Badge>{review.rating}/5</Badge>
+              <div>
+                <p className="font-semibold text-slate-900">{review.clientName}</p>
+                <p className="mt-1 text-sm text-slate-500">Cliente verificado</p>
+              </div>
+              <div aria-label={`${review.rating} de 5 estrellas`} className="text-sm font-bold text-accent-600">
+                {review.rating}/5 estrellas
+              </div>
             </div>
             {review.comment ? <p className="mt-3 text-sm text-slate-600">{review.comment}</p> : null}
           </Card>
         ))}
       </div>
+    </div>
+  );
+};
+
+export const ProfessionalBookingPage = () => {
+  const navigate = useNavigate();
+  const { professionalId } = useParams();
+  const location = useLocation();
+  const professionalFromState = (location.state as { professional?: ProfessionalSearchResult } | null)?.professional;
+  const professionalIdValue = professionalId ?? '';
+  const profileQuery = useProfessionalProfile(professionalId, professionalFromState, 'booking-profile');
+  const professional = professionalFromState ?? profileQuery.data;
+
+  return (
+    <div className="space-y-6">
+      <StatusPanel
+        eyebrow="Reserva de turno"
+        title={professional ? `Reserva con ${professional.fullName}` : 'Reserva con profesional'}
+        description="Inicio del flujo para coordinar fecha, horario y detalle del trabajo antes de confirmar la solicitud."
+        actions={
+          <Button
+            variant="ghost"
+            onClick={() => {
+              void navigate(`/app/profesionales/${professionalIdValue}`, {
+                state: professional ? { professional } : undefined,
+              });
+            }}
+          >
+            Volver al perfil
+          </Button>
+        }
+      />
+
+      {profileQuery.error instanceof ApiError ? (
+        <Card className="border border-amber-200 bg-amber-50">
+          <p className="text-sm font-semibold text-amber-800">No pudimos cargar el profesional</p>
+          <p className="mt-2 text-sm text-amber-700">{profileQuery.error.message}</p>
+        </Card>
+      ) : null}
+
+      {!professional && !profileQuery.isLoading ? (
+        <Card>
+          <p className="text-sm font-semibold text-slate-800">No encontramos el profesional para reservar.</p>
+          <p className="mt-2 text-sm text-slate-600">Vuelve al buscador y selecciona un profesional disponible.</p>
+        </Card>
+      ) : null}
+
+      {professional ? (
+        <div className="grid gap-4 lg:grid-cols-[0.8fr_1.2fr]">
+          <Card>
+            <p className="text-sm font-semibold uppercase text-slate-400">Profesional seleccionado</p>
+            <h3 className="mt-2 text-2xl font-black text-slate-950">{professional.fullName}</h3>
+            <p className="mt-2 text-sm font-semibold text-brand-700">{getPrimarySpecialty(professional)}</p>
+            <p className="mt-2 text-sm text-slate-600">
+              {professional.city ?? 'Ciudad sin cargar'} - {professional.zone ?? 'Zona sin cargar'}
+            </p>
+            <div className="mt-4">
+              <Badge>{professional.available ? 'Disponible' : 'Con agenda'}</Badge>
+            </div>
+          </Card>
+
+          <Card>
+            <form className="grid gap-4 md:grid-cols-2">
+              <label className="space-y-2">
+                <span className="text-sm font-semibold text-slate-700">Fecha tentativa</span>
+                <Input type="date" />
+              </label>
+              <label className="space-y-2">
+                <span className="text-sm font-semibold text-slate-700">Horario</span>
+                <Input type="time" />
+              </label>
+              <label className="space-y-2 md:col-span-2">
+                <span className="text-sm font-semibold text-slate-700">Detalle del trabajo</span>
+                <Input placeholder="Ej. perdida bajo mesada, revisar antes del viernes" />
+              </label>
+              <div className="md:col-span-2">
+                <Button
+                  type="button"
+                  onClick={() => {
+                    void navigate('/app/solicitudes', {
+                      state: { professional },
+                    });
+                  }}
+                >
+                  Continuar con la solicitud
+                </Button>
+              </div>
+            </form>
+          </Card>
+        </div>
+      ) : null}
     </div>
   );
 };
