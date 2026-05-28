@@ -118,6 +118,35 @@ export interface CreateQuoteInput {
   message: string;
 }
 
+export type BookingStatus = 'pending' | 'confirmed' | 'completed' | 'cancelled';
+
+export interface Booking {
+  id: string;
+  serviceRequestId: string;
+  serviceRequestTitle: string;
+  clientId: string;
+  clientName: string;
+  professionalId: string;
+  professionalName: string;
+  scheduledAt: string;
+  status: BookingStatus;
+  notes?: string;
+  createdAt: string;
+}
+
+export interface CreateBookingInput {
+  serviceRequestId: string;
+  professionalId: string;
+  scheduledAt: string;
+  notes?: string;
+}
+
+export interface UpdateBookingInput {
+  scheduledAt?: string;
+  status?: BookingStatus;
+  notes?: string;
+}
+
 export interface AdminUserSummary {
   id: string;
   fullName: string;

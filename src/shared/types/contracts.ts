@@ -33,6 +33,13 @@ export const quoteSchema = z.object({
   message: z.string().min(10, 'Explica alcance y tiempos.'),
 });
 
+export const bookingSchema = z.object({
+  serviceRequestId: z.string().min(1, 'Selecciona la solicitud a reservar.'),
+  scheduledDate: z.string().min(1, 'Selecciona una fecha.'),
+  scheduledTime: z.string().min(1, 'Selecciona un horario.'),
+  notes: z.string().optional(),
+});
+
 export const profileSchema = z.object({
   fullName: z.string().min(3, 'Ingresa un nombre válido.'),
   city: z.string().min(2, 'Ingresa una ciudad válida.'),
@@ -44,4 +51,5 @@ export type RegisterFormValues = z.infer<typeof registerSchema>;
 export type ServiceRequestFormValues = z.infer<typeof serviceRequestSchema>;
 export type ProfessionalSearchFormValues = z.infer<typeof professionalSearchSchema>;
 export type QuoteFormValues = z.infer<typeof quoteSchema>;
+export type BookingFormValues = z.infer<typeof bookingSchema>;
 export type ProfileFormValues = z.infer<typeof profileSchema>;
