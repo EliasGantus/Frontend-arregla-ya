@@ -10,6 +10,7 @@ export const navItems: NavItem[] = [
   { label: 'Panel', to: '/app' },
   { label: 'Perfil', to: '/app/perfil' },
   { label: 'Solicitudes', to: '/app/solicitudes' },
+  { label: 'Reservas', to: '/app/reservas' },
   { label: 'Profesionales', to: '/app/profesionales', roles: ['cliente', 'admin'] },
   { label: 'Cotizaciones', to: '/app/cotizaciones', roles: ['profesional', 'admin'] },
   { label: 'Administración', to: '/app/admin', roles: ['admin'] },

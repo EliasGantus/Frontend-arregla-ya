@@ -5,6 +5,7 @@ import { RoleGuard } from '@/app/guards/role-guard';
 import { AppShell } from '@/app/layouts/app-shell';
 import { NotFoundPage } from '@/app/not-found-page';
 import { AdminPage } from '@/features/admin/pages/admin-page';
+import { BookingsPage } from '@/features/bookings/pages/bookings-page';
 import { DashboardPage } from '@/features/auth/pages/dashboard-page';
 import { LoginPage } from '@/features/auth/pages/login-page';
 import { ProfilePage } from '@/features/profile/pages/profile-page';
@@ -47,6 +48,10 @@ export const router = createBrowserRouter([
           {
             path: 'solicitudes',
             element: <ServiceRequestsPage />,
+          },
+          {
+            path: 'reservas',
+            element: <BookingsPage />,
           },
           {
             element: <RoleGuard allow={['cliente', 'admin']} />,

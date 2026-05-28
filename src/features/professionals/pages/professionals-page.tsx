@@ -1,15 +1,24 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import { useAuth } from '@/features/auth/context/auth-context';
+import { bookingsService } from '@/features/bookings/services/bookings-service';
 import { professionalsService } from '@/features/professionals/services/professionals-service';
+import { serviceRequestsService } from '@/features/service-requests/services/service-requests-service';
 import { categoriesService } from '@/features/service-requests/services/categories-service';
 import { ApiError } from '@/shared/api/api-error';
-import type { ProfessionalSearchFilters, ProfessionalSearchResult } from '@/shared/types/api';
+import type {
+  Booking,
+  CreateBookingInput,
+  ProfessionalSearchFilters,
+  ProfessionalSearchResult,
+} from '@/shared/types/api';
 import {
+  bookingSchema,
+  type BookingFormValues,
   professionalSearchSchema,
   type ProfessionalSearchFormValues,
 } from '@/shared/types/contracts';
@@ -106,6 +115,8 @@ const getPrimarySpecialty = (professional: ProfessionalSearchResult) =>
 
 const getWorkPhotos = (professional: ProfessionalSearchResult) =>
   galleryBySpecialty[professional.specialties[0]?.slug ?? ''] ?? galleryBySpecialty.default;
+
+const toScheduledAt = (date: string, time: string) => new Date(`${date}T${time}:00`).toISOString();
 
 const useProfessionalProfile = (
   professionalId: string | undefined,
@@ -455,10 +466,50 @@ export const ProfessionalBookingPage = () => {
   const navigate = useNavigate();
   const { professionalId } = useParams();
   const location = useLocation();
+  const queryClient = useQueryClient();
   const professionalFromState = (location.state as { professional?: ProfessionalSearchResult } | null)?.professional;
   const professionalIdValue = professionalId ?? '';
   const profileQuery = useProfessionalProfile(professionalId, professionalFromState, 'booking-profile');
+  const serviceRequestsQuery = useQuery({
+    queryKey: ['service-requests', 'booking-flow'],
+    queryFn: () => serviceRequestsService.list(),
+  });
+  const createBookingMutation = useMutation({
+    mutationFn: (payload: CreateBookingInput) => bookingsService.create(payload),
+    onSuccess: async (booking) => {
+      setCreatedBooking(booking);
+      await queryClient.invalidateQueries({ queryKey: ['bookings'] });
+    },
+  });
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<BookingFormValues>({
+    resolver: zodResolver(bookingSchema),
+    defaultValues: {
+      serviceRequestId: '',
+      scheduledDate: '',
+      scheduledTime: '',
+      notes: '',
+    },
+  });
+  const [createdBooking, setCreatedBooking] = useState<Booking | null>(null);
   const professional = professionalFromState ?? profileQuery.data;
+  const serviceRequests = serviceRequestsQuery.data ?? [];
+
+  const submitBooking = (values: BookingFormValues) => {
+    if (!professional) {
+      return;
+    }
+
+    createBookingMutation.mutate({
+      serviceRequestId: values.serviceRequestId,
+      professionalId: professional.id,
+      scheduledAt: toScheduledAt(values.scheduledDate, values.scheduledTime),
+      notes: values.notes?.trim() || undefined,
+    });
+  };
 
   return (
     <div className="space-y-6">
@@ -487,6 +538,40 @@ export const ProfessionalBookingPage = () => {
         </Card>
       ) : null}
 
+      {serviceRequestsQuery.error instanceof ApiError || createBookingMutation.error instanceof ApiError ? (
+        <Card className="border border-amber-200 bg-amber-50">
+          <p className="text-sm font-semibold text-amber-800">No pudimos completar la reserva</p>
+          <p className="mt-2 text-sm text-amber-700">
+            {(createBookingMutation.error instanceof ApiError && createBookingMutation.error.message) ||
+              (serviceRequestsQuery.error instanceof ApiError && serviceRequestsQuery.error.message)}
+          </p>
+        </Card>
+      ) : null}
+
+      {createdBooking ? (
+        <Card className="border border-emerald-200 bg-emerald-50">
+          <p className="text-sm font-semibold text-emerald-800">
+            Reserva creada con estado Pendiente. Recibiras una notificacion de confirmacion.
+          </p>
+          <p className="mt-2 text-sm text-emerald-700">
+            Turno solicitado para {new Intl.DateTimeFormat('es-AR', {
+              dateStyle: 'medium',
+              timeStyle: 'short',
+            }).format(new Date(createdBooking.scheduledAt))}
+            .
+          </p>
+          <Button
+            className="mt-4"
+            onClick={() => {
+              void navigate('/app/reservas');
+            }}
+            variant="secondary"
+          >
+            Ver historial de servicios
+          </Button>
+        </Card>
+      ) : null}
+
       {!professional && !profileQuery.isLoading ? (
         <Card>
           <p className="text-sm font-semibold text-slate-800">No encontramos el profesional para reservar.</p>
@@ -509,29 +594,49 @@ export const ProfessionalBookingPage = () => {
           </Card>
 
           <Card>
-            <form className="grid gap-4 md:grid-cols-2">
+            <form
+              className="grid gap-4 md:grid-cols-2"
+              onSubmit={(event) => void handleSubmit(submitBooking)(event)}
+            >
+              <label className="space-y-2 md:col-span-2">
+                <span className="text-sm font-semibold text-slate-700">Solicitud asociada</span>
+                <Select error={errors.serviceRequestId?.message} {...register('serviceRequestId')}>
+                  <option value="">Selecciona una solicitud abierta</option>
+                  {serviceRequests.map((request) => (
+                    <option key={request.id} value={request.id}>
+                      {request.title} - {request.city} / {request.zone}
+                    </option>
+                  ))}
+                </Select>
+              </label>
               <label className="space-y-2">
                 <span className="text-sm font-semibold text-slate-700">Fecha tentativa</span>
-                <Input type="date" />
+                <Input error={errors.scheduledDate?.message} type="date" {...register('scheduledDate')} />
               </label>
               <label className="space-y-2">
                 <span className="text-sm font-semibold text-slate-700">Horario</span>
-                <Input type="time" />
+                <Input error={errors.scheduledTime?.message} type="time" {...register('scheduledTime')} />
               </label>
               <label className="space-y-2 md:col-span-2">
                 <span className="text-sm font-semibold text-slate-700">Detalle del trabajo</span>
-                <Input placeholder="Ej. perdida bajo mesada, revisar antes del viernes" />
+                <Input
+                  error={errors.notes?.message}
+                  placeholder="Ej. perdida bajo mesada, revisar antes del viernes"
+                  {...register('notes')}
+                />
               </label>
+              {!serviceRequests.length && !serviceRequestsQuery.isLoading ? (
+                <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600 md:col-span-2">
+                  Para reservar necesitas una solicitud abierta. Crea una solicitud y vuelve a seleccionar el
+                  profesional.
+                </div>
+              ) : null}
               <div className="md:col-span-2">
                 <Button
-                  type="button"
-                  onClick={() => {
-                    void navigate('/app/solicitudes', {
-                      state: { professional },
-                    });
-                  }}
+                  disabled={createBookingMutation.isPending || !serviceRequests.length}
+                  type="submit"
                 >
-                  Continuar con la solicitud
+                  {createBookingMutation.isPending ? 'Confirmando...' : 'Confirmar reserva'}
                 </Button>
               </div>
             </form>

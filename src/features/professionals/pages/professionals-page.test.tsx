@@ -4,6 +4,7 @@ import type { PropsWithChildren } from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 
 import { useAuth } from '@/features/auth/context/auth-context';
+import { bookingsService } from '@/features/bookings/services/bookings-service';
 import {
   ProfessionalBookingPage,
   ProfessionalProfilePage,
@@ -11,6 +12,7 @@ import {
 } from '@/features/professionals/pages/professionals-page';
 import { professionalsService } from '@/features/professionals/services/professionals-service';
 import { categoriesService } from '@/features/service-requests/services/categories-service';
+import { serviceRequestsService } from '@/features/service-requests/services/service-requests-service';
 import type { ProfessionalSearchResult } from '@/shared/types/api';
 
 vi.mock('@/features/auth/context/auth-context', () => ({
@@ -30,9 +32,23 @@ vi.mock('@/features/professionals/services/professionals-service', () => ({
   },
 }));
 
+vi.mock('@/features/service-requests/services/service-requests-service', () => ({
+  serviceRequestsService: {
+    list: vi.fn(),
+  },
+}));
+
+vi.mock('@/features/bookings/services/bookings-service', () => ({
+  bookingsService: {
+    create: vi.fn(),
+  },
+}));
+
 const useAuthMock = vi.mocked(useAuth);
 const categoriesServiceMock = vi.mocked(categoriesService);
 const professionalsServiceMock = vi.mocked(professionalsService);
+const serviceRequestsServiceMock = vi.mocked(serviceRequestsService);
+const bookingsServiceMock = vi.mocked(bookingsService);
 
 const professionals: ProfessionalSearchResult[] = [
   {
@@ -111,6 +127,31 @@ describe('ProfessionalsPage', () => {
     ]);
     professionalsServiceMock.search.mockResolvedValue(professionals);
     professionalsServiceMock.reviews.mockResolvedValue([]);
+    serviceRequestsServiceMock.list.mockResolvedValue([
+      {
+        id: 'request-1',
+        title: 'Arreglo de canilla',
+        description: 'Pierde agua bajo mesada',
+        status: 'open',
+        category: { id: 'cat-plom', name: 'Plomeria', slug: 'plomeria' },
+        city: 'Buenos Aires',
+        zone: 'Palermo',
+        createdAt: '2026-05-28T12:00:00.000Z',
+      },
+    ]);
+    bookingsServiceMock.create.mockResolvedValue({
+      id: 'booking-1',
+      serviceRequestId: 'request-1',
+      serviceRequestTitle: 'Arreglo de canilla',
+      clientId: 'client-1',
+      clientName: 'Cliente Demo',
+      professionalId: 'pro-top',
+      professionalName: 'Ana Ruiz',
+      scheduledAt: '2026-05-30T13:30:00.000Z',
+      status: 'pending',
+      notes: 'Revisar perdida bajo mesada',
+      createdAt: '2026-05-28T12:30:00.000Z',
+    });
   });
 
   afterEach(() => {
@@ -191,5 +232,26 @@ describe('ProfessionalsPage', () => {
 
     expect(await screen.findByText('Reserva con Ana Ruiz')).toBeInTheDocument();
     expect(screen.getByText('Fecha tentativa')).toBeInTheDocument();
+    await screen.findByRole('option', { name: 'Arreglo de canilla - Buenos Aires / Palermo' });
+    fireEvent.change(screen.getByLabelText('Solicitud asociada'), {
+      target: { value: 'request-1' },
+    });
+    fireEvent.change(screen.getByLabelText('Fecha tentativa'), {
+      target: { value: '2026-05-30' },
+    });
+    fireEvent.change(screen.getByLabelText('Horario'), {
+      target: { value: '10:30' },
+    });
+    fireEvent.change(screen.getByLabelText('Detalle del trabajo'), {
+      target: { value: 'Revisar perdida bajo mesada' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmar reserva' }));
+
+    await screen.findByText('Reserva creada con estado Pendiente. Recibiras una notificacion de confirmacion.');
+    expect(bookingsServiceMock.create.mock.calls[0]?.[0]).toMatchObject({
+      serviceRequestId: 'request-1',
+      professionalId: 'pro-top',
+      notes: 'Revisar perdida bajo mesada',
+    });
   });
 });
