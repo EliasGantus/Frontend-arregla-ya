@@ -8,6 +8,7 @@ import { AdminPage } from '@/features/admin/pages/admin-page';
 import { BookingsPage } from '@/features/bookings/pages/bookings-page';
 import { DashboardPage } from '@/features/auth/pages/dashboard-page';
 import { LoginPage } from '@/features/auth/pages/login-page';
+import { EmergenciesPage } from '@/features/emergencies/pages/emergencies-page';
 import { ProfilePage } from '@/features/profile/pages/profile-page';
 import {
   ProfessionalBookingPage,
@@ -52,6 +53,10 @@ export const router = createBrowserRouter([
           {
             path: 'reservas',
             element: <BookingsPage />,
+          },
+          {
+            path: 'emergencias',
+            element: <EmergenciesPage />,
           },
           {
             element: <RoleGuard allow={['cliente', 'admin']} />,
