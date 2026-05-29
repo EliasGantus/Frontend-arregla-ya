@@ -34,8 +34,13 @@ export const BookingsPage = () => {
     queryFn: () => bookingsService.list(),
   });
   const updateMutation = useMutation({
-    mutationFn: ({ bookingId, status }: { bookingId: string; status: BookingStatus }) =>
-      bookingsService.update(bookingId, { status }),
+    mutationFn: ({
+      bookingId,
+      status,
+    }: {
+      bookingId: string;
+      status: BookingStatus;
+    }) => bookingsService.update(bookingId, { status }),
     onSuccess: async (booking) => {
       setNotice(
         booking.status === 'confirmed'
@@ -48,11 +53,16 @@ export const BookingsPage = () => {
   const bookings = bookingsQuery.data ?? [];
 
   const canCancel = (booking: Booking) =>
-    booking.status === 'pending' && (user?.role === 'cliente' || user?.role === 'admin');
+    booking.status === 'pending' &&
+    (user?.role === 'cliente' || user?.role === 'admin');
   const canConfirm = (booking: Booking) =>
-    booking.status === 'pending' && (user?.role === 'profesional' || user?.role === 'admin');
+    booking.status === 'pending' &&
+    (user?.role === 'profesional' || user?.role === 'admin');
   const canPay = (booking: Booking) =>
     (booking.status === 'confirmed' || booking.status === 'completed') &&
+    (user?.role === 'cliente' || user?.role === 'admin');
+  const canReview = (booking: Booking) =>
+    booking.status === 'completed' &&
     (user?.role === 'cliente' || user?.role === 'admin');
 
   return (
@@ -69,40 +79,60 @@ export const BookingsPage = () => {
         </Card>
       ) : null}
 
-      {bookingsQuery.error instanceof ApiError || updateMutation.error instanceof ApiError ? (
+      {bookingsQuery.error instanceof ApiError ||
+      updateMutation.error instanceof ApiError ? (
         <Card className="border border-amber-200 bg-amber-50">
-          <p className="text-sm font-semibold text-amber-800">No pudimos sincronizar reservas</p>
+          <p className="text-sm font-semibold text-amber-800">
+            No pudimos sincronizar reservas
+          </p>
           <p className="mt-2 text-sm text-amber-700">
-            {(bookingsQuery.error instanceof ApiError && bookingsQuery.error.message) ||
-              (updateMutation.error instanceof ApiError && updateMutation.error.message)}
+            {(bookingsQuery.error instanceof ApiError &&
+              bookingsQuery.error.message) ||
+              (updateMutation.error instanceof ApiError &&
+                updateMutation.error.message)}
           </p>
         </Card>
       ) : null}
 
       {!bookings.length && !bookingsQuery.isLoading ? (
         <Card>
-          <p className="text-sm text-slate-600">Todavia no hay reservas en tu historial.</p>
+          <p className="text-sm text-slate-600">
+            Todavia no hay reservas en tu historial.
+          </p>
         </Card>
       ) : null}
 
       <div className="grid gap-4">
         {bookings.map((booking) => (
-          <Card key={booking.id} className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <Card
+            key={booking.id}
+            className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"
+          >
             <div>
               <div className="flex flex-wrap items-center gap-2">
-                <h3 className="text-lg font-bold text-slate-950">{booking.serviceRequestTitle}</h3>
+                <h3 className="text-lg font-bold text-slate-950">
+                  {booking.serviceRequestTitle}
+                </h3>
                 <Badge>{statusCopy[booking.status]}</Badge>
               </div>
               <p className="mt-2 text-sm text-slate-600">
-                {booking.professionalName} - {formatDateTime(booking.scheduledAt)}
+                {booking.professionalName} -{' '}
+                {formatDateTime(booking.scheduledAt)}
               </p>
-              {booking.notes ? <p className="mt-2 text-sm text-slate-500">{booking.notes}</p> : null}
+              {booking.notes ? (
+                <p className="mt-2 text-sm text-slate-500">{booking.notes}</p>
+              ) : null}
             </div>
             <div className="flex flex-wrap gap-2">
               {canConfirm(booking) ? (
                 <Button
                   disabled={updateMutation.isPending}
-                  onClick={() => updateMutation.mutate({ bookingId: booking.id, status: 'confirmed' })}
+                  onClick={() =>
+                    updateMutation.mutate({
+                      bookingId: booking.id,
+                      status: 'confirmed',
+                    })
+                  }
                   variant="secondary"
                 >
                   Confirmar reserva
@@ -111,7 +141,12 @@ export const BookingsPage = () => {
               {canCancel(booking) ? (
                 <Button
                   disabled={updateMutation.isPending}
-                  onClick={() => updateMutation.mutate({ bookingId: booking.id, status: 'cancelled' })}
+                  onClick={() =>
+                    updateMutation.mutate({
+                      bookingId: booking.id,
+                      status: 'cancelled',
+                    })
+                  }
                   variant="ghost"
                 >
                   Cancelar reserva
@@ -125,6 +160,17 @@ export const BookingsPage = () => {
                   variant="secondary"
                 >
                   Pagar servicio
+                </Button>
+              ) : null}
+              {canReview(booking) ? (
+                <Button
+                  onClick={() => {
+                    void navigate('/app/calificaciones', {
+                      state: { booking },
+                    });
+                  }}
+                >
+                  Calificar servicio
                 </Button>
               ) : null}
             </div>
