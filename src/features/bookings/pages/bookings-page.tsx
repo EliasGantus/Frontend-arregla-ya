@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import { useAuth } from '@/features/auth/context/auth-context';
 import { bookingsService } from '@/features/bookings/services/bookings-service';
@@ -25,6 +26,7 @@ const formatDateTime = (value: string) =>
 
 export const BookingsPage = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [notice, setNotice] = useState<string | null>(null);
   const bookingsQuery = useQuery({
@@ -49,6 +51,9 @@ export const BookingsPage = () => {
     booking.status === 'pending' && (user?.role === 'cliente' || user?.role === 'admin');
   const canConfirm = (booking: Booking) =>
     booking.status === 'pending' && (user?.role === 'profesional' || user?.role === 'admin');
+  const canPay = (booking: Booking) =>
+    (booking.status === 'confirmed' || booking.status === 'completed') &&
+    (user?.role === 'cliente' || user?.role === 'admin');
 
   return (
     <div className="space-y-6">
@@ -110,6 +115,16 @@ export const BookingsPage = () => {
                   variant="ghost"
                 >
                   Cancelar reserva
+                </Button>
+              ) : null}
+              {canPay(booking) ? (
+                <Button
+                  onClick={() => {
+                    void navigate('/app/pagos', { state: { booking } });
+                  }}
+                  variant="secondary"
+                >
+                  Pagar servicio
                 </Button>
               ) : null}
             </div>

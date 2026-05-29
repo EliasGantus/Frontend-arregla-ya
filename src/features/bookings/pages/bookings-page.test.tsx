@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen } from '@testing-library/react';
 import type { PropsWithChildren } from 'react';
+import { MemoryRouter } from 'react-router-dom';
 
 import { useAuth } from '@/features/auth/context/auth-context';
 import { BookingsPage } from '@/features/bookings/pages/bookings-page';
@@ -87,7 +88,9 @@ describe('BookingsPage', () => {
   it('permite cancelar una reserva pendiente desde el historial', async () => {
     render(
       <TestProviders>
-        <BookingsPage />
+        <MemoryRouter>
+          <BookingsPage />
+        </MemoryRouter>
       </TestProviders>,
     );
 
