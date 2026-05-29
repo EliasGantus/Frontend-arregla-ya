@@ -84,6 +84,15 @@ export const profileSchema = z.object({
   fullName: z.string().min(3, 'Ingresa un nombre válido.'),
   city: z.string().min(2, 'Ingresa una ciudad válida.'),
   zone: z.string().min(2, 'Ingresa una zona válida.'),
+  phone: z.string().min(8, 'Ingresa un telefono válido.'),
+  profilePhotoUrl: z
+    .string()
+    .url('Ingresa una URL valida para la foto.')
+    .optional()
+    .or(z.literal('')),
+  available: z.boolean(),
+  specialties: z.array(z.string()).optional(),
+  workPhotos: z.string().optional(),
 });
 
 export type LoginFormValues = z.infer<typeof loginSchema>;
