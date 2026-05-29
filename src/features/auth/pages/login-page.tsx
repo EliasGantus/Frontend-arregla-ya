@@ -41,9 +41,8 @@ const authCopy: Record<
   { title: string; description: string; submit: string; busy: string }
 > = {
   login: {
-    title: 'Ingresa a tu operacion',
-    description:
-      'Accede con tus credenciales para continuar con tu dashboard personalizado.',
+    title: 'Ingresa a tu cuenta',
+    description: 'Gestiona tus solicitudes y servicios desde ArreglaYa.',
     submit: 'Iniciar sesion',
     busy: 'Ingresando...',
   },
@@ -129,13 +128,28 @@ export const LoginPage = ({ initialMode = 'login' }: LoginPageProps) => {
   });
 
   return (
-    <div className="min-h-screen overflow-x-clip bg-slate-950 px-3 py-4 text-white sm:px-4 sm:py-8 md:px-6">
-      <div className="mx-auto grid min-h-[calc(100vh-2rem)] max-w-7xl gap-4 sm:gap-6 lg:min-h-[calc(100vh-4rem)] lg:grid-cols-[1.15fr_0.85fr]">
-        <BrandShowcase />
-
-        <Card className="flex flex-col justify-between bg-white/95">
+    <div className="min-h-screen overflow-x-clip bg-[#07152a] px-4 py-6 text-white sm:px-6 sm:py-8">
+      <div className="mx-auto grid min-h-[calc(100vh-3rem)] max-w-7xl gap-5 lg:grid-cols-[1.15fr_0.85fr]">
+        <div className="flex items-center gap-3 lg:hidden">
+          <div className="grid h-11 w-11 place-items-center rounded-xl bg-accent-500 text-lg font-black text-white">
+            AY
+          </div>
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-brand-600 sm:tracking-[0.35em]">
+            <p className="font-display text-xl font-black">
+              <span className="text-white">Arregla</span>
+              <span className="text-accent-400">Ya</span>
+            </p>
+            <p className="text-xs text-slate-300">Soluciones a tu alcance</p>
+          </div>
+        </div>
+
+        <div className="hidden lg:block">
+          <BrandShowcase />
+        </div>
+
+        <Card className="flex flex-col rounded-[28px] !bg-white p-5 shadow-2xl shadow-slate-950/30 sm:p-6">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-accent-600 sm:tracking-[0.35em]">
               Acceso
             </p>
             <h1 className="mt-3 text-2xl font-black tracking-tight text-slate-950 sm:text-3xl">
@@ -145,9 +159,9 @@ export const LoginPage = ({ initialMode = 'login' }: LoginPageProps) => {
 
             <div className="mt-6 grid grid-cols-2 rounded-2xl border border-slate-200 bg-slate-100 p-1">
               <button
-                className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${
+                className={`min-h-11 rounded-xl px-4 py-2 text-sm font-semibold transition ${
                   mode === 'login'
-                    ? 'bg-white text-brand-700 shadow-sm'
+                    ? 'bg-white text-accent-600 shadow-sm'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
                 type="button"
@@ -156,9 +170,9 @@ export const LoginPage = ({ initialMode = 'login' }: LoginPageProps) => {
                 Tengo cuenta
               </button>
               <button
-                className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${
+                className={`min-h-11 rounded-xl px-4 py-2 text-sm font-semibold transition ${
                   mode === 'register'
-                    ? 'bg-white text-brand-700 shadow-sm'
+                    ? 'bg-white text-accent-600 shadow-sm'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
                 type="button"
@@ -205,6 +219,7 @@ export const LoginPage = ({ initialMode = 'login' }: LoginPageProps) => {
 
               <Button
                 className="w-full"
+                variant="secondary"
                 type="submit"
                 disabled={loginForm.formState.isSubmitting}
               >
@@ -271,6 +286,7 @@ export const LoginPage = ({ initialMode = 'login' }: LoginPageProps) => {
 
               <Button
                 className="w-full"
+                variant="secondary"
                 type="submit"
                 disabled={registerForm.formState.isSubmitting}
               >
@@ -279,7 +295,7 @@ export const LoginPage = ({ initialMode = 'login' }: LoginPageProps) => {
             </form>
           )}
 
-          <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+          <div className="mt-6 hidden rounded-2xl border border-slate-200 bg-slate-50 p-4 md:block">
             <p className="text-sm font-semibold text-slate-900">
               Configuracion actual
             </p>
