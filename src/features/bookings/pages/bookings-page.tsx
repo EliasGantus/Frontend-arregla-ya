@@ -123,9 +123,10 @@ export const BookingsPage = () => {
                 <p className="mt-2 text-sm text-slate-500">{booking.notes}</p>
               ) : null}
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
               {canConfirm(booking) ? (
                 <Button
+                  className="w-full sm:w-auto"
                   disabled={updateMutation.isPending}
                   onClick={() =>
                     updateMutation.mutate({
@@ -140,6 +141,7 @@ export const BookingsPage = () => {
               ) : null}
               {canCancel(booking) ? (
                 <Button
+                  className="w-full sm:w-auto"
                   disabled={updateMutation.isPending}
                   onClick={() =>
                     updateMutation.mutate({
@@ -154,6 +156,7 @@ export const BookingsPage = () => {
               ) : null}
               {canPay(booking) ? (
                 <Button
+                  className="w-full sm:w-auto"
                   onClick={() => {
                     void navigate('/app/pagos', { state: { booking } });
                   }}
@@ -164,6 +167,7 @@ export const BookingsPage = () => {
               ) : null}
               {canReview(booking) ? (
                 <Button
+                  className="w-full sm:w-auto"
                   onClick={() => {
                     void navigate('/app/calificaciones', {
                       state: { booking },

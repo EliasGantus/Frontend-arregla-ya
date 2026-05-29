@@ -21,11 +21,11 @@ const QuotesContent = () => {
   const queryClient = useQueryClient();
   const query = useQuery({
     queryKey: ['quotes', 'mine'],
-    queryFn: quotesService.listMine,
+    queryFn: () => quotesService.listMine(),
   });
   const requestsQuery = useQuery({
     queryKey: ['service-requests', 'quoteable'],
-    queryFn: serviceRequestsService.list,
+    queryFn: () => serviceRequestsService.list(),
   });
   const {
     register,
@@ -44,9 +44,11 @@ const QuotesContent = () => {
     () => new Set((query.data ?? []).map((quote) => quote.serviceRequestId)),
     [query.data],
   );
-  const quoteableRequests = (requestsQuery.data ?? []).filter((request) => !existingQuoteIds.has(request.id));
+  const quoteableRequests = (requestsQuery.data ?? []).filter(
+    (request) => !existingQuoteIds.has(request.id),
+  );
   const mutation = useMutation({
-    mutationFn: quotesService.create,
+    mutationFn: (values: QuoteFormValues) => quotesService.create(values),
     onSuccess: async () => {
       reset({
         serviceRequestId: '',
@@ -56,12 +58,17 @@ const QuotesContent = () => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['quotes', 'mine'] }),
         queryClient.invalidateQueries({ queryKey: ['service-requests'] }),
-        queryClient.invalidateQueries({ queryKey: ['service-requests', 'quoteable'] }),
+        queryClient.invalidateQueries({
+          queryKey: ['service-requests', 'quoteable'],
+        }),
       ]);
     },
   });
 
   const quotes = query.data ?? [];
+  const submitQuote = (values: QuoteFormValues) => {
+    mutation.mutate(values);
+  };
 
   return (
     <div className="space-y-6">
@@ -71,23 +78,31 @@ const QuotesContent = () => {
         description="Esta base ya separa el dominio de cotizaciones. Luego podrá conectarse a listas reales, detalle, acciones y filtros por estado."
       />
 
-      {query.error instanceof ApiError || requestsQuery.error instanceof ApiError ? (
+      {query.error instanceof ApiError ||
+      requestsQuery.error instanceof ApiError ? (
         <Card className="border border-amber-200 bg-amber-50">
-          <p className="text-sm font-semibold text-amber-800">Sin respuesta del backend</p>
+          <p className="text-sm font-semibold text-amber-800">
+            Sin respuesta del backend
+          </p>
           <p className="mt-2 text-sm text-amber-700">
             {(query.error instanceof ApiError && query.error.message) ||
-              (requestsQuery.error instanceof ApiError && requestsQuery.error.message)}
+              (requestsQuery.error instanceof ApiError &&
+                requestsQuery.error.message)}
           </p>
         </Card>
       ) : null}
 
       <Card>
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <h2 className="text-xl font-bold text-slate-950">Enviar cotización</h2>
-            <p className="mt-2 text-sm text-slate-600">Usa datos reales de solicitudes abiertas y publica tu propuesta.</p>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
+            <h2 className="text-xl font-bold text-slate-950">
+              Enviar cotización
+            </h2>
+            <p className="mt-2 text-sm text-slate-600">
+              Usa datos reales de solicitudes abiertas y publica tu propuesta.
+            </p>
           </div>
-          <Badge>POST /service-requests/:id/quotes</Badge>
+          <Badge className="break-all">POST /service-requests/:id/quotes</Badge>
         </div>
 
         {mutation.error instanceof ApiError ? (
@@ -96,10 +111,18 @@ const QuotesContent = () => {
           </div>
         ) : null}
 
-        <form className="mt-6 grid gap-4" onSubmit={handleSubmit((values) => mutation.mutateAsync(values))}>
+        <form
+          className="mt-6 grid gap-4"
+          onSubmit={(event) => void handleSubmit(submitQuote)(event)}
+        >
           <label className="space-y-2">
-            <span className="text-sm font-semibold text-slate-700">Solicitud</span>
-            <Select error={errors.serviceRequestId?.message} {...register('serviceRequestId')}>
+            <span className="text-sm font-semibold text-slate-700">
+              Solicitud
+            </span>
+            <Select
+              error={errors.serviceRequestId?.message}
+              {...register('serviceRequestId')}
+            >
               <option value="">Selecciona una solicitud</option>
               {quoteableRequests.map((request) => (
                 <option key={request.id} value={request.id}>
@@ -110,14 +133,27 @@ const QuotesContent = () => {
           </label>
           <label className="space-y-2">
             <span className="text-sm font-semibold text-slate-700">Monto</span>
-            <Input placeholder="$85.000" error={errors.amount?.message} {...register('amount')} />
+            <Input
+              placeholder="$85.000"
+              error={errors.amount?.message}
+              {...register('amount')}
+            />
           </label>
           <label className="space-y-2">
-            <span className="text-sm font-semibold text-slate-700">Mensaje</span>
-            <Textarea error={errors.message?.message} {...register('message')} />
+            <span className="text-sm font-semibold text-slate-700">
+              Mensaje
+            </span>
+            <Textarea
+              error={errors.message?.message}
+              {...register('message')}
+            />
           </label>
           <div>
-            <Button type="submit" disabled={mutation.isPending || !quoteableRequests.length}>
+            <Button
+              className="w-full sm:w-auto"
+              type="submit"
+              disabled={mutation.isPending || !quoteableRequests.length}
+            >
               {mutation.isPending ? 'Enviando...' : 'Enviar cotización'}
             </Button>
           </div>
@@ -127,17 +163,25 @@ const QuotesContent = () => {
       <div className="grid gap-4 md:grid-cols-2">
         {!quotes.length && !query.isLoading ? (
           <Card className="md:col-span-2">
-            <p className="text-sm text-slate-600">Aún no tienes cotizaciones registradas.</p>
+            <p className="text-sm text-slate-600">
+              Aún no tienes cotizaciones registradas.
+            </p>
           </Card>
         ) : null}
         {quotes.map((quote) => (
           <Card key={quote.id}>
             <p className="text-sm text-slate-500">Profesional</p>
-            <p className="mt-2 text-xl font-bold text-slate-950">{quote.professionalName}</p>
+            <p className="mt-2 text-xl font-bold text-slate-950">
+              {quote.professionalName}
+            </p>
             <p className="mt-4 text-sm text-slate-500">Solicitud</p>
-            <p className="mt-2 text-sm font-semibold text-slate-800">{quote.serviceRequestId}</p>
+            <p className="mt-2 text-sm font-semibold text-slate-800">
+              {quote.serviceRequestId}
+            </p>
             <p className="mt-4 text-sm text-slate-500">Monto</p>
-            <p className="mt-2 text-3xl font-black tracking-tight text-brand-700">{quote.amount}</p>
+            <p className="mt-2 text-3xl font-black tracking-tight text-brand-700">
+              {quote.amount}
+            </p>
             <p className="mt-4 rounded-full bg-accent-50 px-3 py-2 text-sm font-semibold text-accent-700">
               Estado: {quote.status}
             </p>

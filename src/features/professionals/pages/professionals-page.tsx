@@ -114,9 +114,11 @@ const getPrimarySpecialty = (professional: ProfessionalSearchResult) =>
   professional.specialties[0]?.name ?? 'Especialidad sin cargar';
 
 const getWorkPhotos = (professional: ProfessionalSearchResult) =>
-  galleryBySpecialty[professional.specialties[0]?.slug ?? ''] ?? galleryBySpecialty.default;
+  galleryBySpecialty[professional.specialties[0]?.slug ?? ''] ??
+  galleryBySpecialty.default;
 
-const toScheduledAt = (date: string, time: string) => new Date(`${date}T${time}:00`).toISOString();
+const toScheduledAt = (date: string, time: string) =>
+  new Date(`${date}T${time}:00`).toISOString();
 
 const useProfessionalProfile = (
   professionalId: string | undefined,
@@ -128,7 +130,9 @@ const useProfessionalProfile = (
     queryFn: async () => {
       const professionals = await professionalsService.search();
 
-      return professionals.find((professional) => professional.id === professionalId);
+      return professionals.find(
+        (professional) => professional.id === professionalId,
+      );
     },
     enabled: Boolean(professionalId && !professionalFromState),
   });
@@ -136,7 +140,9 @@ const useProfessionalProfile = (
 const ProfessionalsSearchContent = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [filters, setFilters] = useState<ProfessionalSearchFilters | null>(null);
+  const [filters, setFilters] = useState<ProfessionalSearchFilters | null>(
+    null,
+  );
   const categoriesQuery = useQuery({
     queryKey: ['categories'],
     queryFn: () => categoriesService.list(),
@@ -180,12 +186,17 @@ const ProfessionalsSearchContent = () => {
         description="Filtra profesionales activos, compara puntaje y resenas, y entra al perfil para validar si encaja con tu necesidad."
       />
 
-      {categoriesQuery.error instanceof ApiError || professionalsQuery.error instanceof ApiError ? (
+      {categoriesQuery.error instanceof ApiError ||
+      professionalsQuery.error instanceof ApiError ? (
         <Card className="border border-amber-200 bg-amber-50">
-          <p className="text-sm font-semibold text-amber-800">Backend no disponible</p>
+          <p className="text-sm font-semibold text-amber-800">
+            Backend no disponible
+          </p>
           <p className="mt-2 text-sm text-amber-700">
-            {(professionalsQuery.error instanceof ApiError && professionalsQuery.error.message) ||
-              (categoriesQuery.error instanceof ApiError && categoriesQuery.error.message)}
+            {(professionalsQuery.error instanceof ApiError &&
+              professionalsQuery.error.message) ||
+              (categoriesQuery.error instanceof ApiError &&
+                categoriesQuery.error.message)}
           </p>
         </Card>
       ) : null}
@@ -196,8 +207,13 @@ const ProfessionalsSearchContent = () => {
           onSubmit={(event) => void handleSubmit(submitSearch)(event)}
         >
           <label className="space-y-2">
-            <span className="text-sm font-semibold text-slate-700">Especialidad</span>
-            <Select error={errors.categoryId?.message} {...register('categoryId')}>
+            <span className="text-sm font-semibold text-slate-700">
+              Especialidad
+            </span>
+            <Select
+              error={errors.categoryId?.message}
+              {...register('categoryId')}
+            >
               <option value="">Selecciona una especialidad</option>
               {categoriesQuery.data?.map((category) => (
                 <option key={category.id} value={category.id}>
@@ -209,7 +225,11 @@ const ProfessionalsSearchContent = () => {
 
           <label className="space-y-2">
             <span className="text-sm font-semibold text-slate-700">Zona</span>
-            <Input placeholder="Palermo" error={errors.zone?.message} {...register('zone')} />
+            <Input
+              placeholder="Palermo"
+              error={errors.zone?.message}
+              {...register('zone')}
+            />
           </label>
 
           <div className="flex flex-col justify-end gap-3">
@@ -221,8 +241,14 @@ const ProfessionalsSearchContent = () => {
               />
               Disponible ahora
             </label>
-            <Button type="submit" disabled={professionalsQuery.isFetching}>
-              {professionalsQuery.isFetching ? 'Buscando...' : 'Buscar profesionales'}
+            <Button
+              className="w-full sm:w-auto"
+              type="submit"
+              disabled={professionalsQuery.isFetching}
+            >
+              {professionalsQuery.isFetching
+                ? 'Buscando...'
+                : 'Buscar profesionales'}
             </Button>
           </div>
         </form>
@@ -230,36 +256,49 @@ const ProfessionalsSearchContent = () => {
 
       {!hasSearched ? (
         <Card>
-          <p className="text-sm font-semibold text-slate-800">Completa los filtros para iniciar la busqueda.</p>
+          <p className="text-sm font-semibold text-slate-800">
+            Completa los filtros para iniciar la busqueda.
+          </p>
           <p className="mt-2 text-sm text-slate-600">
-            Los resultados se ordenan por puntaje y cantidad de resenas para que priorices profesionales mejor
-            calificados.
+            Los resultados se ordenan por puntaje y cantidad de resenas para que
+            priorices profesionales mejor calificados.
           </p>
         </Card>
       ) : null}
 
-      {hasSearched && !professionalsQuery.isFetching && !professionals.length ? (
+      {hasSearched &&
+      !professionalsQuery.isFetching &&
+      !professionals.length ? (
         <Card>
           <p className="text-sm font-semibold text-slate-800">
             No encontramos profesionales disponibles para esos filtros.
           </p>
           <p className="mt-2 text-sm text-slate-600">
-            Amplia la zona, cambia la especialidad o quita la disponibilidad inmediata para ver mas opciones.
+            Amplia la zona, cambia la especialidad o quita la disponibilidad
+            inmediata para ver mas opciones.
           </p>
         </Card>
       ) : null}
 
       <div className="grid gap-4 xl:grid-cols-2">
         {professionals.map((professional) => (
-          <Card key={professional.id} className="flex flex-col justify-between gap-5">
+          <Card
+            key={professional.id}
+            className="flex flex-col justify-between gap-5"
+          >
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               <div>
-                <h3 className="text-xl font-bold text-slate-950">{professional.fullName}</h3>
+                <h3 className="text-xl font-bold text-slate-950">
+                  {professional.fullName}
+                </h3>
                 <p className="mt-1 text-sm text-slate-500">
-                  {professional.city ?? 'Ciudad sin cargar'} - {professional.zone ?? 'Zona sin cargar'}
+                  {professional.city ?? 'Ciudad sin cargar'} -{' '}
+                  {professional.zone ?? 'Zona sin cargar'}
                 </p>
               </div>
-              <Badge>{professional.available ? 'Disponible' : 'Con agenda'}</Badge>
+              <Badge>
+                {professional.available ? 'Disponible' : 'Con agenda'}
+              </Badge>
             </div>
 
             <div className="flex flex-wrap gap-2">
@@ -275,19 +314,27 @@ const ProfessionalsSearchContent = () => {
 
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="rounded-2xl bg-slate-50 px-4 py-3">
-                <p className="text-xs font-semibold uppercase text-slate-400">Puntaje</p>
+                <p className="text-xs font-semibold uppercase text-slate-400">
+                  Puntaje
+                </p>
                 <p className="mt-1 text-2xl font-black text-slate-950">
                   {formatRating(professional.ratingAverage)}
                 </p>
               </div>
               <div className="rounded-2xl bg-slate-50 px-4 py-3">
-                <p className="text-xs font-semibold uppercase text-slate-400">Resenas</p>
-                <p className="mt-1 text-2xl font-black text-slate-950">{professional.ratingCount}</p>
+                <p className="text-xs font-semibold uppercase text-slate-400">
+                  Resenas
+                </p>
+                <p className="mt-1 text-2xl font-black text-slate-950">
+                  {professional.ratingCount}
+                </p>
               </div>
             </div>
 
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-sm text-slate-600">{professional.email}</p>
+              <p className="break-all text-sm text-slate-600">
+                {professional.email}
+              </p>
               <Button
                 aria-label={`Ver perfil de ${professional.fullName}`}
                 className="w-full sm:w-auto"
@@ -311,9 +358,15 @@ export const ProfessionalProfilePage = () => {
   const navigate = useNavigate();
   const { professionalId } = useParams();
   const location = useLocation();
-  const professionalFromState = (location.state as { professional?: ProfessionalSearchResult } | null)?.professional;
+  const professionalFromState = (
+    location.state as { professional?: ProfessionalSearchResult } | null
+  )?.professional;
   const professionalIdValue = professionalId ?? '';
-  const profileQuery = useProfessionalProfile(professionalId, professionalFromState, 'profile');
+  const profileQuery = useProfessionalProfile(
+    professionalId,
+    professionalFromState,
+    'profile',
+  );
   const reviewsQuery = useQuery({
     queryKey: ['professionals', professionalId, 'reviews'],
     queryFn: () => professionalsService.reviews(professionalIdValue),
@@ -326,11 +379,16 @@ export const ProfessionalProfilePage = () => {
     <div className="space-y-6">
       <StatusPanel
         eyebrow="Perfil profesional"
-        title={professional ? `Perfil de ${professional.fullName}` : 'Perfil profesional'}
+        title={
+          professional
+            ? `Perfil de ${professional.fullName}`
+            : 'Perfil profesional'
+        }
         description="Informacion de contacto, especialidades, disponibilidad y resenas del profesional seleccionado."
         actions={
           <>
             <Button
+              className="w-full sm:w-auto"
               variant="ghost"
               onClick={() => {
                 void navigate('/app/profesionales');
@@ -340,11 +398,15 @@ export const ProfessionalProfilePage = () => {
             </Button>
             {professional ? (
               <Button
+                className="w-full sm:w-auto"
                 variant="secondary"
                 onClick={() => {
-                  void navigate(`/app/profesionales/${professional.id}/reservar`, {
-                    state: { professional },
-                  });
+                  void navigate(
+                    `/app/profesionales/${professional.id}/reservar`,
+                    {
+                      state: { professional },
+                    },
+                  );
                 }}
               >
                 Reservar
@@ -354,20 +416,29 @@ export const ProfessionalProfilePage = () => {
         }
       />
 
-      {profileQuery.error instanceof ApiError || reviewsQuery.error instanceof ApiError ? (
+      {profileQuery.error instanceof ApiError ||
+      reviewsQuery.error instanceof ApiError ? (
         <Card className="border border-amber-200 bg-amber-50">
-          <p className="text-sm font-semibold text-amber-800">No pudimos cargar todo el perfil</p>
+          <p className="text-sm font-semibold text-amber-800">
+            No pudimos cargar todo el perfil
+          </p>
           <p className="mt-2 text-sm text-amber-700">
-            {(profileQuery.error instanceof ApiError && profileQuery.error.message) ||
-              (reviewsQuery.error instanceof ApiError && reviewsQuery.error.message)}
+            {(profileQuery.error instanceof ApiError &&
+              profileQuery.error.message) ||
+              (reviewsQuery.error instanceof ApiError &&
+                reviewsQuery.error.message)}
           </p>
         </Card>
       ) : null}
 
       {!professional && !profileQuery.isLoading ? (
         <Card>
-          <p className="text-sm font-semibold text-slate-800">No encontramos el profesional solicitado.</p>
-          <p className="mt-2 text-sm text-slate-600">Vuelve al buscador y abre el perfil desde un resultado vigente.</p>
+          <p className="text-sm font-semibold text-slate-800">
+            No encontramos el profesional solicitado.
+          </p>
+          <p className="mt-2 text-sm text-slate-600">
+            Vuelve al buscador y abre el perfil desde un resultado vigente.
+          </p>
         </Card>
       ) : null}
 
@@ -377,14 +448,23 @@ export const ProfessionalProfilePage = () => {
             <Card>
               <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div>
-                  <h3 className="text-2xl font-black text-slate-950">{professional.fullName}</h3>
-                  <p className="mt-2 text-sm font-semibold text-brand-700">{getPrimarySpecialty(professional)}</p>
-                  <p className="mt-2 text-sm text-slate-600">{professional.email}</p>
+                  <h3 className="text-2xl font-black text-slate-950">
+                    {professional.fullName}
+                  </h3>
+                  <p className="mt-2 text-sm font-semibold text-brand-700">
+                    {getPrimarySpecialty(professional)}
+                  </p>
+                  <p className="mt-2 break-all text-sm text-slate-600">
+                    {professional.email}
+                  </p>
                   <p className="mt-1 text-sm text-slate-500">
-                    {professional.city ?? 'Ciudad sin cargar'} - {professional.zone ?? 'Zona sin cargar'}
+                    {professional.city ?? 'Ciudad sin cargar'} -{' '}
+                    {professional.zone ?? 'Zona sin cargar'}
                   </p>
                 </div>
-                <Badge>{professional.available ? 'Disponible' : 'Con agenda'}</Badge>
+                <Badge>
+                  {professional.available ? 'Disponible' : 'Con agenda'}
+                </Badge>
               </div>
 
               <div className="mt-6 flex flex-wrap gap-2">
@@ -401,16 +481,22 @@ export const ProfessionalProfilePage = () => {
 
             <Card>
               <p className="text-sm font-semibold text-slate-500">Reputacion</p>
-              <div className="mt-4 grid grid-cols-2 gap-3">
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
                 <div className="rounded-2xl bg-slate-50 px-4 py-3">
-                  <p className="text-xs font-semibold uppercase text-slate-400">Puntaje</p>
+                  <p className="text-xs font-semibold uppercase text-slate-400">
+                    Puntaje
+                  </p>
                   <p className="mt-1 text-3xl font-black text-slate-950">
                     {formatRating(professional.ratingAverage)}
                   </p>
                 </div>
                 <div className="rounded-2xl bg-slate-50 px-4 py-3">
-                  <p className="text-xs font-semibold uppercase text-slate-400">Resenas</p>
-                  <p className="mt-1 text-3xl font-black text-slate-950">{professional.ratingCount}</p>
+                  <p className="text-xs font-semibold uppercase text-slate-400">
+                    Resenas
+                  </p>
+                  <p className="mt-1 text-3xl font-black text-slate-950">
+                    {professional.ratingCount}
+                  </p>
                 </div>
               </div>
             </Card>
@@ -419,16 +505,29 @@ export const ProfessionalProfilePage = () => {
           <Card>
             <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <p className="text-sm font-semibold uppercase text-slate-400">Trabajos realizados</p>
-                <h3 className="mt-1 text-xl font-bold text-slate-950">Fotos de servicios recientes</h3>
+                <p className="text-sm font-semibold uppercase text-slate-400">
+                  Trabajos realizados
+                </p>
+                <h3 className="mt-1 text-xl font-bold text-slate-950">
+                  Fotos de servicios recientes
+                </h3>
               </div>
               <Badge>{workPhotos.length} fotos</Badge>
             </div>
             <div className="mt-5 grid gap-4 md:grid-cols-3">
               {workPhotos.map((photo) => (
-                <figure className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50" key={photo.src}>
-                  <img alt={photo.alt} className="h-44 w-full object-cover" src={photo.src} />
-                  <figcaption className="px-4 py-3 text-sm font-semibold text-slate-700">{photo.title}</figcaption>
+                <figure
+                  className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50"
+                  key={photo.src}
+                >
+                  <img
+                    alt={photo.alt}
+                    className="h-44 w-full object-cover"
+                    src={photo.src}
+                  />
+                  <figcaption className="px-4 py-3 text-sm font-semibold text-slate-700">
+                    {photo.title}
+                  </figcaption>
                 </figure>
               ))}
             </div>
@@ -440,21 +539,32 @@ export const ProfessionalProfilePage = () => {
         <h3 className="text-lg font-bold text-slate-950">Resenas recientes</h3>
         {!reviewsQuery.isLoading && !(reviewsQuery.data ?? []).length ? (
           <Card>
-            <p className="text-sm text-slate-600">Este profesional todavia no tiene resenas publicadas.</p>
+            <p className="text-sm text-slate-600">
+              Este profesional todavia no tiene resenas publicadas.
+            </p>
           </Card>
         ) : null}
         {(reviewsQuery.data ?? []).map((review) => (
           <Card key={review.id}>
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <p className="font-semibold text-slate-900">{review.clientName}</p>
-                <p className="mt-1 text-sm text-slate-500">Cliente verificado</p>
+                <p className="font-semibold text-slate-900">
+                  {review.clientName}
+                </p>
+                <p className="mt-1 text-sm text-slate-500">
+                  Cliente verificado
+                </p>
               </div>
-              <div aria-label={`${review.rating} de 5 estrellas`} className="text-sm font-bold text-accent-600">
+              <div
+                aria-label={`${review.rating} de 5 estrellas`}
+                className="text-sm font-bold text-accent-600"
+              >
                 {review.rating}/5 estrellas
               </div>
             </div>
-            {review.comment ? <p className="mt-3 text-sm text-slate-600">{review.comment}</p> : null}
+            {review.comment ? (
+              <p className="mt-3 text-sm text-slate-600">{review.comment}</p>
+            ) : null}
           </Card>
         ))}
       </div>
@@ -467,15 +577,22 @@ export const ProfessionalBookingPage = () => {
   const { professionalId } = useParams();
   const location = useLocation();
   const queryClient = useQueryClient();
-  const professionalFromState = (location.state as { professional?: ProfessionalSearchResult } | null)?.professional;
+  const professionalFromState = (
+    location.state as { professional?: ProfessionalSearchResult } | null
+  )?.professional;
   const professionalIdValue = professionalId ?? '';
-  const profileQuery = useProfessionalProfile(professionalId, professionalFromState, 'booking-profile');
+  const profileQuery = useProfessionalProfile(
+    professionalId,
+    professionalFromState,
+    'booking-profile',
+  );
   const serviceRequestsQuery = useQuery({
     queryKey: ['service-requests', 'booking-flow'],
     queryFn: () => serviceRequestsService.list(),
   });
   const createBookingMutation = useMutation({
-    mutationFn: (payload: CreateBookingInput) => bookingsService.create(payload),
+    mutationFn: (payload: CreateBookingInput) =>
+      bookingsService.create(payload),
     onSuccess: async (booking) => {
       setCreatedBooking(booking);
       await queryClient.invalidateQueries({ queryKey: ['bookings'] });
@@ -515,10 +632,15 @@ export const ProfessionalBookingPage = () => {
     <div className="space-y-6">
       <StatusPanel
         eyebrow="Reserva de turno"
-        title={professional ? `Reserva con ${professional.fullName}` : 'Reserva con profesional'}
+        title={
+          professional
+            ? `Reserva con ${professional.fullName}`
+            : 'Reserva con profesional'
+        }
         description="Inicio del flujo para coordinar fecha, horario y detalle del trabajo antes de confirmar la solicitud."
         actions={
           <Button
+            className="w-full sm:w-auto"
             variant="ghost"
             onClick={() => {
               void navigate(`/app/profesionales/${professionalIdValue}`, {
@@ -533,17 +655,26 @@ export const ProfessionalBookingPage = () => {
 
       {profileQuery.error instanceof ApiError ? (
         <Card className="border border-amber-200 bg-amber-50">
-          <p className="text-sm font-semibold text-amber-800">No pudimos cargar el profesional</p>
-          <p className="mt-2 text-sm text-amber-700">{profileQuery.error.message}</p>
+          <p className="text-sm font-semibold text-amber-800">
+            No pudimos cargar el profesional
+          </p>
+          <p className="mt-2 text-sm text-amber-700">
+            {profileQuery.error.message}
+          </p>
         </Card>
       ) : null}
 
-      {serviceRequestsQuery.error instanceof ApiError || createBookingMutation.error instanceof ApiError ? (
+      {serviceRequestsQuery.error instanceof ApiError ||
+      createBookingMutation.error instanceof ApiError ? (
         <Card className="border border-amber-200 bg-amber-50">
-          <p className="text-sm font-semibold text-amber-800">No pudimos completar la reserva</p>
+          <p className="text-sm font-semibold text-amber-800">
+            No pudimos completar la reserva
+          </p>
           <p className="mt-2 text-sm text-amber-700">
-            {(createBookingMutation.error instanceof ApiError && createBookingMutation.error.message) ||
-              (serviceRequestsQuery.error instanceof ApiError && serviceRequestsQuery.error.message)}
+            {(createBookingMutation.error instanceof ApiError &&
+              createBookingMutation.error.message) ||
+              (serviceRequestsQuery.error instanceof ApiError &&
+                serviceRequestsQuery.error.message)}
           </p>
         </Card>
       ) : null}
@@ -551,10 +682,12 @@ export const ProfessionalBookingPage = () => {
       {createdBooking ? (
         <Card className="border border-emerald-200 bg-emerald-50">
           <p className="text-sm font-semibold text-emerald-800">
-            Reserva creada con estado Pendiente. Recibiras una notificacion de confirmacion.
+            Reserva creada con estado Pendiente. Recibiras una notificacion de
+            confirmacion.
           </p>
           <p className="mt-2 text-sm text-emerald-700">
-            Turno solicitado para {new Intl.DateTimeFormat('es-AR', {
+            Turno solicitado para{' '}
+            {new Intl.DateTimeFormat('es-AR', {
               dateStyle: 'medium',
               timeStyle: 'short',
             }).format(new Date(createdBooking.scheduledAt))}
@@ -574,22 +707,35 @@ export const ProfessionalBookingPage = () => {
 
       {!professional && !profileQuery.isLoading ? (
         <Card>
-          <p className="text-sm font-semibold text-slate-800">No encontramos el profesional para reservar.</p>
-          <p className="mt-2 text-sm text-slate-600">Vuelve al buscador y selecciona un profesional disponible.</p>
+          <p className="text-sm font-semibold text-slate-800">
+            No encontramos el profesional para reservar.
+          </p>
+          <p className="mt-2 text-sm text-slate-600">
+            Vuelve al buscador y selecciona un profesional disponible.
+          </p>
         </Card>
       ) : null}
 
       {professional ? (
         <div className="grid gap-4 lg:grid-cols-[0.8fr_1.2fr]">
           <Card>
-            <p className="text-sm font-semibold uppercase text-slate-400">Profesional seleccionado</p>
-            <h3 className="mt-2 text-2xl font-black text-slate-950">{professional.fullName}</h3>
-            <p className="mt-2 text-sm font-semibold text-brand-700">{getPrimarySpecialty(professional)}</p>
+            <p className="text-sm font-semibold uppercase text-slate-400">
+              Profesional seleccionado
+            </p>
+            <h3 className="mt-2 text-2xl font-black text-slate-950">
+              {professional.fullName}
+            </h3>
+            <p className="mt-2 text-sm font-semibold text-brand-700">
+              {getPrimarySpecialty(professional)}
+            </p>
             <p className="mt-2 text-sm text-slate-600">
-              {professional.city ?? 'Ciudad sin cargar'} - {professional.zone ?? 'Zona sin cargar'}
+              {professional.city ?? 'Ciudad sin cargar'} -{' '}
+              {professional.zone ?? 'Zona sin cargar'}
             </p>
             <div className="mt-4">
-              <Badge>{professional.available ? 'Disponible' : 'Con agenda'}</Badge>
+              <Badge>
+                {professional.available ? 'Disponible' : 'Con agenda'}
+              </Badge>
             </div>
           </Card>
 
@@ -599,8 +745,13 @@ export const ProfessionalBookingPage = () => {
               onSubmit={(event) => void handleSubmit(submitBooking)(event)}
             >
               <label className="space-y-2 md:col-span-2">
-                <span className="text-sm font-semibold text-slate-700">Solicitud asociada</span>
-                <Select error={errors.serviceRequestId?.message} {...register('serviceRequestId')}>
+                <span className="text-sm font-semibold text-slate-700">
+                  Solicitud asociada
+                </span>
+                <Select
+                  error={errors.serviceRequestId?.message}
+                  {...register('serviceRequestId')}
+                >
                   <option value="">Selecciona una solicitud abierta</option>
                   {serviceRequests.map((request) => (
                     <option key={request.id} value={request.id}>
@@ -610,15 +761,29 @@ export const ProfessionalBookingPage = () => {
                 </Select>
               </label>
               <label className="space-y-2">
-                <span className="text-sm font-semibold text-slate-700">Fecha tentativa</span>
-                <Input error={errors.scheduledDate?.message} type="date" {...register('scheduledDate')} />
+                <span className="text-sm font-semibold text-slate-700">
+                  Fecha tentativa
+                </span>
+                <Input
+                  error={errors.scheduledDate?.message}
+                  type="date"
+                  {...register('scheduledDate')}
+                />
               </label>
               <label className="space-y-2">
-                <span className="text-sm font-semibold text-slate-700">Horario</span>
-                <Input error={errors.scheduledTime?.message} type="time" {...register('scheduledTime')} />
+                <span className="text-sm font-semibold text-slate-700">
+                  Horario
+                </span>
+                <Input
+                  error={errors.scheduledTime?.message}
+                  type="time"
+                  {...register('scheduledTime')}
+                />
               </label>
               <label className="space-y-2 md:col-span-2">
-                <span className="text-sm font-semibold text-slate-700">Detalle del trabajo</span>
+                <span className="text-sm font-semibold text-slate-700">
+                  Detalle del trabajo
+                </span>
                 <Input
                   error={errors.notes?.message}
                   placeholder="Ej. perdida bajo mesada, revisar antes del viernes"
@@ -627,16 +792,21 @@ export const ProfessionalBookingPage = () => {
               </label>
               {!serviceRequests.length && !serviceRequestsQuery.isLoading ? (
                 <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600 md:col-span-2">
-                  Para reservar necesitas una solicitud abierta. Crea una solicitud y vuelve a seleccionar el
-                  profesional.
+                  Para reservar necesitas una solicitud abierta. Crea una
+                  solicitud y vuelve a seleccionar el profesional.
                 </div>
               ) : null}
               <div className="md:col-span-2">
                 <Button
-                  disabled={createBookingMutation.isPending || !serviceRequests.length}
+                  className="w-full sm:w-auto"
+                  disabled={
+                    createBookingMutation.isPending || !serviceRequests.length
+                  }
                   type="submit"
                 >
-                  {createBookingMutation.isPending ? 'Confirmando...' : 'Confirmar reserva'}
+                  {createBookingMutation.isPending
+                    ? 'Confirmando...'
+                    : 'Confirmar reserva'}
                 </Button>
               </div>
             </form>

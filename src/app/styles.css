@@ -5,8 +5,16 @@
 :root {
   color: #0d1726;
   background:
-    radial-gradient(circle at top left, rgba(18, 104, 215, 0.28), transparent 35%),
-    radial-gradient(circle at top right, rgba(255, 125, 0, 0.22), transparent 30%),
+    radial-gradient(
+      circle at top left,
+      rgba(18, 104, 215, 0.28),
+      transparent 35%
+    ),
+    radial-gradient(
+      circle at top right,
+      rgba(255, 125, 0, 0.22),
+      transparent 30%
+    ),
     linear-gradient(180deg, #f4f8fc 0%, #eef4fa 100%);
   font-family: 'Segoe UI', Tahoma, sans-serif;
   line-height: 1.5;
@@ -22,17 +30,21 @@
 }
 
 html {
+  max-width: 100%;
   scroll-behavior: smooth;
 }
 
 body {
   margin: 0;
+  max-width: 100%;
   min-width: 320px;
   min-height: 100vh;
+  overflow-x: clip;
 }
 
 #root {
   min-height: 100vh;
+  overflow-x: clip;
 }
 
 button,
@@ -40,6 +52,13 @@ input,
 textarea,
 select {
   font: inherit;
+}
+
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
 }
 
 ::selection {

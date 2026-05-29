@@ -17,11 +17,16 @@ const variants: Record<ButtonVariant, string> = {
     'border border-slate-200 bg-white/70 text-slate-700 hover:border-brand-300 hover:text-brand-700',
 };
 
-export const Button = ({ className, variant = 'primary', type = 'button', ...props }: ButtonProps) => (
+export const Button = ({
+  className,
+  variant = 'primary',
+  type = 'button',
+  ...props
+}: ButtonProps) => (
   <button
     type={type}
     className={cn(
-      'inline-flex items-center justify-center rounded-2xl px-4 py-3 text-sm font-semibold transition duration-200 disabled:cursor-not-allowed disabled:opacity-50',
+      'inline-flex min-h-11 min-w-0 items-center justify-center rounded-2xl px-4 py-3 text-center text-sm font-semibold leading-tight transition duration-200 disabled:cursor-not-allowed disabled:opacity-50',
       variants[variant],
       className,
     )}

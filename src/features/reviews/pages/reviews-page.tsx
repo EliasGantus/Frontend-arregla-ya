@@ -116,6 +116,7 @@ export const ReviewsPage = () => {
         description="Selecciona un servicio terminado, puntua al profesional y publica una resena visible en su perfil."
         actions={
           <Button
+            className="w-full sm:w-auto"
             variant="ghost"
             onClick={() => {
               void navigate('/app/reservas');
@@ -169,6 +170,7 @@ export const ReviewsPage = () => {
               ) : null}
             </div>
             <Button
+              className="w-full sm:w-auto"
               variant="secondary"
               onClick={() => {
                 void navigate(
@@ -275,6 +277,7 @@ export const ReviewsPage = () => {
             </label>
 
             <Button
+              className="w-full sm:w-auto"
               disabled={
                 createReviewMutation.isPending ||
                 Boolean(visibleReview) ||
@@ -303,7 +306,7 @@ export const ReviewsPage = () => {
                   {selectedBooking.professionalName}
                 </p>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid gap-3 sm:grid-cols-2">
                 <div className="rounded-2xl bg-slate-50 px-4 py-3">
                   <p className="text-xs font-semibold uppercase text-slate-400">
                     Fecha

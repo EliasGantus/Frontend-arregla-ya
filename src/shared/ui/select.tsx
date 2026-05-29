@@ -6,11 +6,16 @@ interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
   error?: string;
 }
 
-export const Select = ({ className, error, children, ...props }: SelectProps) => (
+export const Select = ({
+  className,
+  error,
+  children,
+  ...props
+}: SelectProps) => (
   <div className="space-y-1.5">
     <select
       className={cn(
-        'w-full rounded-2xl border px-4 py-3 outline-none transition',
+        'min-h-11 w-full min-w-0 rounded-2xl border px-4 py-3 outline-none transition',
         error
           ? 'border-red-300 bg-red-50 text-red-900'
           : 'border-slate-200 bg-white text-slate-900 focus:border-brand-400 focus:ring-4 focus:ring-brand-100',

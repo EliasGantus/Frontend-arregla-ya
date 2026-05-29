@@ -175,7 +175,7 @@ export const ProfilePage = () => {
               <h3 className="text-2xl font-black text-slate-950">
                 {savedSettings.fullName || user?.fullName}
               </h3>
-              <p className="mt-1 text-sm text-slate-600">
+              <p className="mt-1 break-all text-sm text-slate-600">
                 {query.data?.email ?? user?.email}
               </p>
               <div className="mt-2 flex flex-wrap gap-2">
@@ -317,7 +317,11 @@ export const ProfilePage = () => {
             ) : null}
 
             <div className="md:col-span-2">
-              <Button disabled={mutation.isPending} type="submit">
+              <Button
+                className="w-full sm:w-auto"
+                disabled={mutation.isPending}
+                type="submit"
+              >
                 {mutation.isPending ? 'Guardando...' : 'Guardar cambios'}
               </Button>
             </div>
@@ -338,7 +342,7 @@ export const ProfilePage = () => {
                 {watchedValues.zone || savedSettings.zone}
               </p>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-3 sm:grid-cols-2">
               <div className="rounded-2xl bg-slate-50 px-4 py-3">
                 <p className="text-xs font-semibold uppercase text-slate-400">
                   Contacto

@@ -16,7 +16,8 @@ const adminCards = [
   },
   {
     label: 'Observabilidad',
-    description: 'Lugar natural para métricas, alertas y estados del backend futuro.',
+    description:
+      'Lugar natural para métricas, alertas y estados del backend futuro.',
   },
 ];
 
@@ -25,11 +26,11 @@ export const AdminPage = () => <AdminContent />;
 const AdminContent = () => {
   const usersQuery = useQuery({
     queryKey: ['admin', 'users'],
-    queryFn: adminService.users,
+    queryFn: () => adminService.users(),
   });
   const serviceRequestsQuery = useQuery({
     queryKey: ['admin', 'service-requests'],
-    queryFn: adminService.serviceRequests,
+    queryFn: () => adminService.serviceRequests(),
   });
 
   return (
@@ -40,12 +41,17 @@ const AdminContent = () => {
         description="La ruta ya está protegida por rol. Solo administradores pueden navegar este módulo en la base actual."
       />
 
-      {usersQuery.error instanceof ApiError || serviceRequestsQuery.error instanceof ApiError ? (
+      {usersQuery.error instanceof ApiError ||
+      serviceRequestsQuery.error instanceof ApiError ? (
         <Card className="border border-amber-200 bg-amber-50">
-          <p className="text-sm font-semibold text-amber-800">Panel en modo desacoplado</p>
+          <p className="text-sm font-semibold text-amber-800">
+            Panel en modo desacoplado
+          </p>
           <p className="mt-2 text-sm text-amber-700">
-            {(usersQuery.error instanceof ApiError && usersQuery.error.message) ||
-              (serviceRequestsQuery.error instanceof ApiError && serviceRequestsQuery.error.message)}
+            {(usersQuery.error instanceof ApiError &&
+              usersQuery.error.message) ||
+              (serviceRequestsQuery.error instanceof ApiError &&
+                serviceRequestsQuery.error.message)}
           </p>
         </Card>
       ) : null}
@@ -70,9 +76,12 @@ const AdminContent = () => {
         <h2 className="text-xl font-bold text-slate-950">Usuarios</h2>
         <div className="mt-4 grid gap-3">
           {(usersQuery.data ?? []).map((user) => (
-            <div key={user.id} className="rounded-2xl border border-slate-200 px-4 py-3">
+            <div
+              key={user.id}
+              className="min-w-0 rounded-2xl border border-slate-200 px-4 py-3"
+            >
               <p className="font-semibold text-slate-900">{user.fullName}</p>
-              <p className="text-sm text-slate-500">{user.email}</p>
+              <p className="break-all text-sm text-slate-500">{user.email}</p>
               <p className="mt-2 text-sm text-brand-700">Rol: {user.role}</p>
             </div>
           ))}
@@ -80,15 +89,22 @@ const AdminContent = () => {
       </Card>
 
       <Card>
-        <h2 className="text-xl font-bold text-slate-950">Solicitudes globales</h2>
+        <h2 className="text-xl font-bold text-slate-950">
+          Solicitudes globales
+        </h2>
         <div className="mt-4 grid gap-3">
           {(serviceRequestsQuery.data ?? []).map((request) => (
-            <div key={request.id} className="rounded-2xl border border-slate-200 px-4 py-3">
+            <div
+              key={request.id}
+              className="min-w-0 rounded-2xl border border-slate-200 px-4 py-3"
+            >
               <p className="font-semibold text-slate-900">{request.title}</p>
               <p className="text-sm text-slate-500">
                 {request.category.name} · {request.city} / {request.zone}
               </p>
-              <p className="mt-2 text-sm text-brand-700">Estado: {request.status}</p>
+              <p className="mt-2 text-sm text-brand-700">
+                Estado: {request.status}
+              </p>
             </div>
           ))}
         </div>
