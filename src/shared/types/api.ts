@@ -147,6 +147,22 @@ export interface UpdateBookingInput {
   notes?: string;
 }
 
+export interface CreateEmergencyInput {
+  title: string;
+  description: string;
+  categoryId: string;
+  city: string;
+  zone: string;
+  scheduledAt: string;
+  budget?: string;
+  notes?: string;
+}
+
+export interface EmergencyResponse {
+  serviceRequest: ServiceRequest;
+  booking: Booking;
+}
+
 export interface AdminUserSummary {
   id: string;
   fullName: string;
