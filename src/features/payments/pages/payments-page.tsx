@@ -8,7 +8,10 @@ import { bookingsService } from '@/features/bookings/services/bookings-service';
 import { paymentsService } from '@/features/payments/services/payments-service';
 import { ApiError } from '@/shared/api/api-error';
 import type { Booking, Payment } from '@/shared/types/api';
-import { paymentSchema, type PaymentFormValues } from '@/shared/types/contracts';
+import {
+  paymentSchema,
+  type PaymentFormValues,
+} from '@/shared/types/contracts';
 import { Badge } from '@/shared/ui/badge';
 import { Button } from '@/shared/ui/button';
 import { Card } from '@/shared/ui/card';
@@ -28,7 +31,8 @@ const toAmountCents = (amount: string) => {
   return Math.round(Number(normalized) * 100);
 };
 
-const isPayable = (booking: Booking) => booking.status === 'confirmed' || booking.status === 'completed';
+const isPayable = (booking: Booking) =>
+  booking.status === 'confirmed' || booking.status === 'completed';
 
 const methodCopy: Record<PaymentFormValues['method'], string> = {
   mercado_pago_wallet: 'MercadoPago wallet',
@@ -37,7 +41,8 @@ const methodCopy: Record<PaymentFormValues['method'], string> = {
 
 export const PaymentsPage = () => {
   const location = useLocation();
-  const bookingFromState = (location.state as { booking?: Booking } | null)?.booking;
+  const bookingFromState = (location.state as { booking?: Booking } | null)
+    ?.booking;
   const [payment, setPayment] = useState<Payment | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const bookingsQuery = useQuery({
@@ -50,7 +55,12 @@ export const PaymentsPage = () => {
   });
   const payableBookings = useMemo(() => {
     const bookings = bookingsQuery.data ?? [];
-    const merged = bookingFromState ? [bookingFromState, ...bookings.filter((booking) => booking.id !== bookingFromState.id)] : bookings;
+    const merged = bookingFromState
+      ? [
+          bookingFromState,
+          ...bookings.filter((booking) => booking.id !== bookingFromState.id),
+        ]
+      : bookings;
 
     return merged.filter(isPayable);
   }, [bookingFromState, bookingsQuery.data]);
@@ -70,9 +80,17 @@ export const PaymentsPage = () => {
   const selectedBookingId = watch('bookingId');
   const selectedAmount = watch('amount');
   const selectedMethod = watch('method');
-  const selectedBooking = payableBookings.find((booking) => booking.id === selectedBookingId);
+  const selectedBooking = payableBookings.find(
+    (booking) => booking.id === selectedBookingId,
+  );
   const createPaymentMutation = useMutation({
-    mutationFn: ({ bookingId, values }: { bookingId: string; values: PaymentFormValues }) =>
+    mutationFn: ({
+      bookingId,
+      values,
+    }: {
+      bookingId: string;
+      values: PaymentFormValues;
+    }) =>
       paymentsService.createForBooking(bookingId, {
         amountCents: toAmountCents(values.amount),
         currency: 'ARS',
@@ -111,12 +129,17 @@ export const PaymentsPage = () => {
         </Card>
       ) : null}
 
-      {bookingsQuery.error instanceof ApiError || paymentsQuery.error instanceof ApiError ? (
+      {bookingsQuery.error instanceof ApiError ||
+      paymentsQuery.error instanceof ApiError ? (
         <Card className="border border-amber-200 bg-amber-50">
-          <p className="text-sm font-semibold text-amber-800">No pudimos cargar pagos</p>
+          <p className="text-sm font-semibold text-amber-800">
+            No pudimos cargar pagos
+          </p>
           <p className="mt-2 text-sm text-amber-700">
-            {(bookingsQuery.error instanceof ApiError && bookingsQuery.error.message) ||
-              (paymentsQuery.error instanceof ApiError && paymentsQuery.error.message)}
+            {(bookingsQuery.error instanceof ApiError &&
+              bookingsQuery.error.message) ||
+              (paymentsQuery.error instanceof ApiError &&
+                paymentsQuery.error.message)}
           </p>
         </Card>
       ) : null}
@@ -130,21 +153,33 @@ export const PaymentsPage = () => {
           </p>
           <div className="mt-4 grid gap-3 md:grid-cols-3">
             <div>
-              <p className="text-xs font-semibold uppercase text-emerald-700">Comprobante</p>
-              <p className="mt-1 font-bold text-emerald-950">{payment.receiptNumber ?? payment.id}</p>
+              <p className="text-xs font-semibold uppercase text-emerald-700">
+                Comprobante
+              </p>
+              <p className="mt-1 font-bold text-emerald-950">
+                {payment.receiptNumber ?? payment.id}
+              </p>
             </div>
             <div>
-              <p className="text-xs font-semibold uppercase text-emerald-700">Monto</p>
-              <p className="mt-1 font-bold text-emerald-950">{formatMoney(payment.amountCents, payment.currency)}</p>
+              <p className="text-xs font-semibold uppercase text-emerald-700">
+                Monto
+              </p>
+              <p className="mt-1 font-bold text-emerald-950">
+                {formatMoney(payment.amountCents, payment.currency)}
+              </p>
             </div>
             <div>
-              <p className="text-xs font-semibold uppercase text-emerald-700">Profesional</p>
-              <p className="mt-1 font-bold text-emerald-950">{payment.professionalName}</p>
+              <p className="text-xs font-semibold uppercase text-emerald-700">
+                Profesional
+              </p>
+              <p className="mt-1 font-bold text-emerald-950">
+                {payment.professionalName}
+              </p>
             </div>
           </div>
           {payment.checkoutUrl ? (
             <a
-              className="mt-4 inline-flex rounded-2xl bg-accent-500 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-accent-500/30 hover:bg-accent-400"
+              className="mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-2xl bg-accent-500 px-4 py-3 text-center text-sm font-semibold leading-tight text-white shadow-lg shadow-accent-500/30 hover:bg-accent-400 sm:w-auto"
               href={payment.checkoutUrl}
               rel="noreferrer"
               target="_blank"
@@ -157,10 +192,18 @@ export const PaymentsPage = () => {
 
       <div className="grid gap-4 lg:grid-cols-[1fr_0.8fr]">
         <Card>
-          <form className="grid gap-4" onSubmit={(event) => void handleSubmit(submitPayment)(event)}>
+          <form
+            className="grid gap-4"
+            onSubmit={(event) => void handleSubmit(submitPayment)(event)}
+          >
             <label className="space-y-2">
-              <span className="text-sm font-semibold text-slate-700">Servicio a pagar</span>
-              <Select error={errors.bookingId?.message} {...register('bookingId')}>
+              <span className="text-sm font-semibold text-slate-700">
+                Servicio a pagar
+              </span>
+              <Select
+                error={errors.bookingId?.message}
+                {...register('bookingId')}
+              >
                 <option value="">Selecciona un servicio completado</option>
                 {payableBookings.map((booking) => (
                   <option key={booking.id} value={booking.id}>
@@ -171,48 +214,82 @@ export const PaymentsPage = () => {
             </label>
 
             <label className="space-y-2">
-              <span className="text-sm font-semibold text-slate-700">Monto</span>
-              <Input placeholder="85000" error={errors.amount?.message} {...register('amount')} />
+              <span className="text-sm font-semibold text-slate-700">
+                Monto
+              </span>
+              <Input
+                placeholder="85000"
+                error={errors.amount?.message}
+                {...register('amount')}
+              />
             </label>
 
             <label className="space-y-2">
-              <span className="text-sm font-semibold text-slate-700">Metodo de pago</span>
+              <span className="text-sm font-semibold text-slate-700">
+                Metodo de pago
+              </span>
               <Select error={errors.method?.message} {...register('method')}>
                 <option value="mercado_pago_wallet">MercadoPago wallet</option>
-                <option value="mercado_pago_card">Tarjeta via MercadoPago</option>
+                <option value="mercado_pago_card">
+                  Tarjeta via MercadoPago
+                </option>
               </Select>
             </label>
 
-            <Button disabled={createPaymentMutation.isPending || !payableBookings.length} type="submit">
-              {createPaymentMutation.isPending ? 'Procesando...' : 'Confirmar pago'}
+            <Button
+              className="w-full sm:w-auto"
+              disabled={
+                createPaymentMutation.isPending || !payableBookings.length
+              }
+              type="submit"
+            >
+              {createPaymentMutation.isPending
+                ? 'Procesando...'
+                : 'Confirmar pago'}
             </Button>
           </form>
         </Card>
 
         <Card>
-          <p className="text-sm font-semibold uppercase text-slate-400">Resumen del servicio</p>
+          <p className="text-sm font-semibold uppercase text-slate-400">
+            Resumen del servicio
+          </p>
           {selectedBooking ? (
             <div className="mt-4 space-y-4">
               <div>
-                <h3 className="text-xl font-bold text-slate-950">{selectedBooking.serviceRequestTitle}</h3>
-                <p className="mt-1 text-sm text-slate-600">{selectedBooking.professionalName}</p>
+                <h3 className="text-xl font-bold text-slate-950">
+                  {selectedBooking.serviceRequestTitle}
+                </h3>
+                <p className="mt-1 text-sm text-slate-600">
+                  {selectedBooking.professionalName}
+                </p>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid gap-3 sm:grid-cols-2">
                 <div className="rounded-2xl bg-slate-50 px-4 py-3">
-                  <p className="text-xs font-semibold uppercase text-slate-400">Monto</p>
+                  <p className="text-xs font-semibold uppercase text-slate-400">
+                    Monto
+                  </p>
                   <p className="mt-1 text-lg font-black text-slate-950">
-                    {selectedAmount ? formatMoney(toAmountCents(selectedAmount)) : '-'}
+                    {selectedAmount
+                      ? formatMoney(toAmountCents(selectedAmount))
+                      : '-'}
                   </p>
                 </div>
                 <div className="rounded-2xl bg-slate-50 px-4 py-3">
-                  <p className="text-xs font-semibold uppercase text-slate-400">Metodo</p>
-                  <p className="mt-1 text-sm font-bold text-slate-950">{methodCopy[selectedMethod]}</p>
+                  <p className="text-xs font-semibold uppercase text-slate-400">
+                    Metodo
+                  </p>
+                  <p className="mt-1 text-sm font-bold text-slate-950">
+                    {methodCopy[selectedMethod]}
+                  </p>
                 </div>
               </div>
               <Badge>MercadoPago</Badge>
             </div>
           ) : (
-            <p className="mt-4 text-sm text-slate-600">Selecciona un servicio para ver el detalle del pago.</p>
+            <p className="mt-4 text-sm text-slate-600">
+              Selecciona un servicio para ver el detalle del pago.
+            </p>
           )}
         </Card>
       </div>
@@ -221,15 +298,23 @@ export const PaymentsPage = () => {
         <h3 className="text-lg font-bold text-slate-950">Pagos recientes</h3>
         {!(paymentsQuery.data ?? []).length && !paymentsQuery.isLoading ? (
           <Card>
-            <p className="text-sm text-slate-600">Todavia no hay pagos registrados.</p>
+            <p className="text-sm text-slate-600">
+              Todavia no hay pagos registrados.
+            </p>
           </Card>
         ) : null}
         {(paymentsQuery.data ?? []).map((item) => (
-          <Card key={item.id} className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <Card
+            key={item.id}
+            className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
+          >
             <div>
-              <p className="font-semibold text-slate-900">{item.serviceRequestTitle}</p>
+              <p className="font-semibold text-slate-900">
+                {item.serviceRequestTitle}
+              </p>
               <p className="mt-1 text-sm text-slate-600">
-                {item.professionalName} - {formatMoney(item.amountCents, item.currency)}
+                {item.professionalName} -{' '}
+                {formatMoney(item.amountCents, item.currency)}
               </p>
             </div>
             <Badge>{item.status}</Badge>

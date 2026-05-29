@@ -36,16 +36,21 @@ const seededUsers = [
   { role: 'Admin', email: 'admin@arreglaya.com' },
 ];
 
-const authCopy: Record<AuthMode, { title: string; description: string; submit: string; busy: string }> = {
+const authCopy: Record<
+  AuthMode,
+  { title: string; description: string; submit: string; busy: string }
+> = {
   login: {
     title: 'Ingresa a tu operacion',
-    description: 'Accede con tus credenciales para continuar con tu dashboard personalizado.',
+    description:
+      'Accede con tus credenciales para continuar con tu dashboard personalizado.',
     submit: 'Iniciar sesion',
     busy: 'Ingresando...',
   },
   register: {
     title: 'Crea tu cuenta',
-    description: 'Registra tu perfil como cliente o profesional para empezar a operar en ArreglaYa.',
+    description:
+      'Registra tu perfil como cliente o profesional para empezar a operar en ArreglaYa.',
     submit: 'Crear cuenta',
     busy: 'Creando cuenta...',
   },
@@ -124,14 +129,18 @@ export const LoginPage = ({ initialMode = 'login' }: LoginPageProps) => {
   });
 
   return (
-    <div className="min-h-screen bg-slate-950 px-4 py-8 text-white md:px-6">
-      <div className="mx-auto grid min-h-[calc(100vh-4rem)] max-w-7xl gap-6 lg:grid-cols-[1.15fr_0.85fr]">
+    <div className="min-h-screen overflow-x-clip bg-slate-950 px-3 py-4 text-white sm:px-4 sm:py-8 md:px-6">
+      <div className="mx-auto grid min-h-[calc(100vh-2rem)] max-w-7xl gap-4 sm:gap-6 lg:min-h-[calc(100vh-4rem)] lg:grid-cols-[1.15fr_0.85fr]">
         <BrandShowcase />
 
         <Card className="flex flex-col justify-between bg-white/95">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.35em] text-brand-600">Acceso</p>
-            <h1 className="mt-3 text-3xl font-black tracking-tight text-slate-950">{copy.title}</h1>
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-brand-600 sm:tracking-[0.35em]">
+              Acceso
+            </p>
+            <h1 className="mt-3 text-2xl font-black tracking-tight text-slate-950 sm:text-3xl">
+              {copy.title}
+            </h1>
             <p className="mt-3 text-sm text-slate-600">{copy.description}</p>
 
             <div className="mt-6 grid grid-cols-2 rounded-2xl border border-slate-200 bg-slate-100 p-1">
@@ -161,9 +170,14 @@ export const LoginPage = ({ initialMode = 'login' }: LoginPageProps) => {
           </div>
 
           {mode === 'login' ? (
-            <form className="mt-8 space-y-4" onSubmit={(event) => void onLoginSubmit(event)}>
+            <form
+              className="mt-8 space-y-4"
+              onSubmit={(event) => void onLoginSubmit(event)}
+            >
               <label className="block space-y-2">
-                <span className="text-sm font-semibold text-slate-700">Email</span>
+                <span className="text-sm font-semibold text-slate-700">
+                  Email
+                </span>
                 <Input
                   placeholder="nombre@arreglaya.com"
                   error={loginForm.formState.errors.email?.message}
@@ -172,7 +186,9 @@ export const LoginPage = ({ initialMode = 'login' }: LoginPageProps) => {
               </label>
 
               <label className="block space-y-2">
-                <span className="text-sm font-semibold text-slate-700">Contraseña</span>
+                <span className="text-sm font-semibold text-slate-700">
+                  Contraseña
+                </span>
                 <Input
                   type="password"
                   placeholder="Ingresa tu contraseña"
@@ -187,14 +203,23 @@ export const LoginPage = ({ initialMode = 'login' }: LoginPageProps) => {
                 </div>
               ) : null}
 
-              <Button className="w-full" type="submit" disabled={loginForm.formState.isSubmitting}>
+              <Button
+                className="w-full"
+                type="submit"
+                disabled={loginForm.formState.isSubmitting}
+              >
                 {loginForm.formState.isSubmitting ? copy.busy : copy.submit}
               </Button>
             </form>
           ) : (
-            <form className="mt-8 space-y-4" onSubmit={(event) => void onRegisterSubmit(event)}>
+            <form
+              className="mt-8 space-y-4"
+              onSubmit={(event) => void onRegisterSubmit(event)}
+            >
               <label className="block space-y-2">
-                <span className="text-sm font-semibold text-slate-700">Nombre completo</span>
+                <span className="text-sm font-semibold text-slate-700">
+                  Nombre completo
+                </span>
                 <Input
                   placeholder="Nombre y apellido"
                   error={registerForm.formState.errors.fullName?.message}
@@ -203,7 +228,9 @@ export const LoginPage = ({ initialMode = 'login' }: LoginPageProps) => {
               </label>
 
               <label className="block space-y-2">
-                <span className="text-sm font-semibold text-slate-700">Email</span>
+                <span className="text-sm font-semibold text-slate-700">
+                  Email
+                </span>
                 <Input
                   placeholder="nombre@arreglaya.com"
                   error={registerForm.formState.errors.email?.message}
@@ -212,7 +239,9 @@ export const LoginPage = ({ initialMode = 'login' }: LoginPageProps) => {
               </label>
 
               <label className="block space-y-2">
-                <span className="text-sm font-semibold text-slate-700">Contraseña</span>
+                <span className="text-sm font-semibold text-slate-700">
+                  Contraseña
+                </span>
                 <Input
                   type="password"
                   placeholder="Crea una contraseña segura"
@@ -222,7 +251,9 @@ export const LoginPage = ({ initialMode = 'login' }: LoginPageProps) => {
               </label>
 
               <label className="block space-y-2">
-                <span className="text-sm font-semibold text-slate-700">Tipo de cuenta</span>
+                <span className="text-sm font-semibold text-slate-700">
+                  Tipo de cuenta
+                </span>
                 <Select
                   error={registerForm.formState.errors.role?.message}
                   {...registerForm.register('role')}
@@ -238,22 +269,31 @@ export const LoginPage = ({ initialMode = 'login' }: LoginPageProps) => {
                 </div>
               ) : null}
 
-              <Button className="w-full" type="submit" disabled={registerForm.formState.isSubmitting}>
+              <Button
+                className="w-full"
+                type="submit"
+                disabled={registerForm.formState.isSubmitting}
+              >
                 {registerForm.formState.isSubmitting ? copy.busy : copy.submit}
               </Button>
             </form>
           )}
 
           <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-            <p className="text-sm font-semibold text-slate-900">Configuracion actual</p>
+            <p className="text-sm font-semibold text-slate-900">
+              Configuracion actual
+            </p>
             <p className="mt-2 text-sm text-slate-600">
               API: <code>{env.apiUrl}</code>
             </p>
             <p className="mt-2 text-sm text-slate-600">
-              Dev auth: <code>{env.enableDevAuth ? 'habilitado' : 'deshabilitado'}</code>
+              Dev auth:{' '}
+              <code>{env.enableDevAuth ? 'habilitado' : 'deshabilitado'}</code>
             </p>
             <div className="mt-4 space-y-2 text-sm text-slate-600">
-              <p className="font-semibold text-slate-800">Usuarios seed del backend</p>
+              <p className="font-semibold text-slate-800">
+                Usuarios seed del backend
+              </p>
               {seededUsers.map((hint) => (
                 <p key={hint.role}>
                   {hint.role}: <code>{hint.email}</code>
@@ -265,12 +305,17 @@ export const LoginPage = ({ initialMode = 'login' }: LoginPageProps) => {
             </div>
             {env.enableDevAuth ? (
               <div className="mt-4 space-y-2 text-sm text-slate-600">
-                <p className="font-semibold text-slate-800">Fallback local habilitado</p>
-                <p>Si la API falla, login y registro pueden entrar en modo demo.</p>
+                <p className="font-semibold text-slate-800">
+                  Fallback local habilitado
+                </p>
+                <p>
+                  Si la API falla, login y registro pueden entrar en modo demo.
+                </p>
               </div>
             ) : (
               <p className="mt-4 text-sm text-slate-600">
-                Si quieres un fallback sin backend, activa <code>VITE_ENABLE_DEV_AUTH=true</code>.
+                Si quieres un fallback sin backend, activa{' '}
+                <code>VITE_ENABLE_DEV_AUTH=true</code>.
               </p>
             )}
           </div>

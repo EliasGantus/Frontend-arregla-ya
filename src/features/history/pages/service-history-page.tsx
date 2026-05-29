@@ -130,7 +130,7 @@ export const ServiceHistoryPage = () => {
               ))}
             </Select>
           </label>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {statusFilters
               .filter((filter) => filter.value !== 'all')
               .map((filter) => (
@@ -289,9 +289,10 @@ export const ServiceHistoryPage = () => {
                 </div>
               </div>
 
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
                 {selectedBooking.status === 'completed' ? (
                   <Button
+                    className="w-full sm:w-auto"
                     onClick={() => {
                       void navigate('/app/calificaciones', {
                         state: { booking: selectedBooking },
@@ -305,6 +306,7 @@ export const ServiceHistoryPage = () => {
                   selectedBooking.status === 'completed') &&
                 !selectedPayment ? (
                   <Button
+                    className="w-full sm:w-auto"
                     variant="secondary"
                     onClick={() => {
                       void navigate('/app/pagos', {
