@@ -1,0 +1,163 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { fireEvent, render, screen } from '@testing-library/react';
+import type { PropsWithChildren } from 'react';
+import { MemoryRouter } from 'react-router-dom';
+
+import { bookingsService } from '@/features/bookings/services/bookings-service';
+import { professionalsService } from '@/features/professionals/services/professionals-service';
+import { ReviewsPage } from '@/features/reviews/pages/reviews-page';
+import { reviewsService } from '@/features/reviews/services/reviews-service';
+
+vi.mock('@/features/bookings/services/bookings-service', () => ({
+  bookingsService: {
+    list: vi.fn(),
+  },
+}));
+
+vi.mock('@/features/professionals/services/professionals-service', () => ({
+  professionalsService: {
+    reviews: vi.fn(),
+  },
+}));
+
+vi.mock('@/features/reviews/services/reviews-service', () => ({
+  reviewsService: {
+    create: vi.fn(),
+  },
+}));
+
+const bookingsServiceMock = vi.mocked(bookingsService);
+const professionalsServiceMock = vi.mocked(professionalsService);
+const reviewsServiceMock = vi.mocked(reviewsService);
+
+const completedBooking = {
+  id: 'booking-1',
+  serviceRequestId: 'request-1',
+  serviceRequestTitle: 'Cambio de termica',
+  clientId: 'client-1',
+  clientName: 'Cliente Demo',
+  professionalId: 'pro-1',
+  professionalName: 'Ana Ruiz',
+  scheduledAt: '2026-05-30T13:30:00.000Z',
+  status: 'completed' as const,
+  notes: 'Trabajo terminado',
+  createdAt: '2026-05-28T12:30:00.000Z',
+};
+
+const TestProviders = ({ children }: PropsWithChildren) => {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+      },
+    },
+  });
+
+  return (
+    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+  );
+};
+
+const renderPage = () =>
+  render(
+    <TestProviders>
+      <MemoryRouter
+        initialEntries={[
+          {
+            pathname: '/app/calificaciones',
+            state: { booking: completedBooking },
+          },
+        ]}
+      >
+        <ReviewsPage />
+      </MemoryRouter>
+    </TestProviders>,
+  );
+
+describe('ReviewsPage', () => {
+  beforeEach(() => {
+    bookingsServiceMock.list.mockResolvedValue([completedBooking]);
+    professionalsServiceMock.reviews.mockResolvedValue([]);
+    reviewsServiceMock.create.mockImplementation((payload) =>
+      Promise.resolve({
+        id: 'review-1',
+        bookingId: 'booking-1',
+        serviceRequestId: 'request-1',
+        clientId: 'client-1',
+        clientName: 'Cliente Demo',
+        professionalId: 'pro-1',
+        professionalName: 'Ana Ruiz',
+        rating: payload.rating,
+        comment: payload.comment,
+        createdAt: '2026-05-30T14:00:00.000Z',
+      }),
+    );
+  });
+
+  afterEach(() => {
+    vi.resetAllMocks();
+  });
+
+  it('publica una resena para un servicio completado', async () => {
+    renderPage();
+
+    await screen.findByText('Cambio de termica');
+    fireEvent.click(screen.getByRole('radio', { name: '5 estrellas' }));
+    fireEvent.change(screen.getByLabelText('Comentario opcional'), {
+      target: { value: 'Trabajo prolijo y puntual.' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Enviar resena' }));
+
+    expect(
+      await screen.findByText(
+        'Resena publicada. Este servicio ya no puede volver a calificarse.',
+      ),
+    ).toBeInTheDocument();
+    expect(reviewsServiceMock.create.mock.calls[0]?.[0]).toEqual({
+      bookingId: 'booking-1',
+      rating: 5,
+      comment: 'Trabajo prolijo y puntual.',
+    });
+  });
+
+  it('permite enviar solo estrellas sin comentario', async () => {
+    renderPage();
+
+    await screen.findByText('Cambio de termica');
+    fireEvent.click(screen.getByRole('radio', { name: '4 estrellas' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Enviar resena' }));
+
+    expect(await screen.findByText('4/5 estrellas')).toBeInTheDocument();
+    expect(reviewsServiceMock.create.mock.calls[0]?.[0]).toMatchObject({
+      bookingId: 'booking-1',
+      rating: 4,
+    });
+  });
+
+  it('bloquea una nueva calificacion cuando la reserva ya tiene resena', async () => {
+    professionalsServiceMock.reviews.mockResolvedValue([
+      {
+        id: 'review-1',
+        bookingId: 'booking-1',
+        serviceRequestId: 'request-1',
+        clientId: 'client-1',
+        clientName: 'Cliente Demo',
+        professionalId: 'pro-1',
+        professionalName: 'Ana Ruiz',
+        rating: 5,
+        createdAt: '2026-05-30T14:00:00.000Z',
+      },
+    ]);
+    renderPage();
+
+    expect(
+      await screen.findByText(
+        'Resena publicada. Este servicio ya no puede volver a calificarse.',
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Enviar resena' }),
+    ).toBeDisabled();
+    expect(reviewsServiceMock.create.mock.calls).toHaveLength(0);
+  });
+});

@@ -65,6 +65,12 @@ export interface ProfessionalReview {
   createdAt: string;
 }
 
+export interface CreateReviewInput {
+  bookingId: string;
+  rating: number;
+  comment?: string;
+}
+
 export type ServiceRequestStatus =
   | 'draft'
   | 'open'
@@ -163,7 +169,12 @@ export interface EmergencyResponse {
   booking: Booking;
 }
 
-export type PaymentStatus = 'pending' | 'approved' | 'rejected' | 'cancelled' | 'refunded';
+export type PaymentStatus =
+  | 'pending'
+  | 'approved'
+  | 'rejected'
+  | 'cancelled'
+  | 'refunded';
 export type PaymentProvider = 'mercado_pago';
 
 export interface Payment {
