@@ -9,6 +9,7 @@ import { BookingsPage } from '@/features/bookings/pages/bookings-page';
 import { DashboardPage } from '@/features/auth/pages/dashboard-page';
 import { LoginPage } from '@/features/auth/pages/login-page';
 import { EmergenciesPage } from '@/features/emergencies/pages/emergencies-page';
+import { ServiceHistoryPage } from '@/features/history/pages/service-history-page';
 import { PaymentsPage } from '@/features/payments/pages/payments-page';
 import { ProfilePage } from '@/features/profile/pages/profile-page';
 import {
@@ -82,6 +83,10 @@ export const router = createBrowserRouter([
               {
                 path: 'calificaciones',
                 element: <ReviewsPage />,
+              },
+              {
+                path: 'historial',
+                element: <ServiceHistoryPage />,
               },
             ],
           },
