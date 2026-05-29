@@ -51,6 +51,14 @@ export const emergencySchema = z.object({
   notes: z.string().optional(),
 });
 
+export const paymentSchema = z.object({
+  bookingId: z.string().min(1, 'Selecciona el servicio a pagar.'),
+  amount: z.string().min(1, 'Ingresa el monto del servicio.'),
+  method: z.enum(['mercado_pago_wallet', 'mercado_pago_card'], {
+    required_error: 'Selecciona un metodo de pago.',
+  }),
+});
+
 export const profileSchema = z.object({
   fullName: z.string().min(3, 'Ingresa un nombre válido.'),
   city: z.string().min(2, 'Ingresa una ciudad válida.'),
@@ -64,4 +72,5 @@ export type ProfessionalSearchFormValues = z.infer<typeof professionalSearchSche
 export type QuoteFormValues = z.infer<typeof quoteSchema>;
 export type BookingFormValues = z.infer<typeof bookingSchema>;
 export type EmergencyFormValues = z.infer<typeof emergencySchema>;
+export type PaymentFormValues = z.infer<typeof paymentSchema>;
 export type ProfileFormValues = z.infer<typeof profileSchema>;

@@ -163,6 +163,43 @@ export interface EmergencyResponse {
   booking: Booking;
 }
 
+export type PaymentStatus = 'pending' | 'approved' | 'rejected' | 'cancelled' | 'refunded';
+export type PaymentProvider = 'mercado_pago';
+
+export interface Payment {
+  id: string;
+  bookingId: string;
+  serviceRequestId: string;
+  serviceRequestTitle: string;
+  professionalId: string;
+  professionalName: string;
+  amountCents: number;
+  currency: string;
+  status: PaymentStatus;
+  provider: PaymentProvider;
+  checkoutUrl?: string;
+  receiptNumber?: string;
+  paidAt?: string;
+  createdAt: string;
+}
+
+export interface CreatePaymentInput {
+  amountCents: number;
+  currency: string;
+  description?: string;
+}
+
+export interface PaymentReceipt {
+  receiptNumber: string;
+  paymentId: string;
+  bookingId: string;
+  serviceRequestTitle: string;
+  professionalName: string;
+  amountCents: number;
+  currency: string;
+  paidAt: string;
+}
+
 export interface AdminUserSummary {
   id: string;
   fullName: string;

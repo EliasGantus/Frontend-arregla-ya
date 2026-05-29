@@ -11,6 +11,7 @@ export const navItems: NavItem[] = [
   { label: 'Perfil', to: '/app/perfil' },
   { label: 'Solicitudes', to: '/app/solicitudes' },
   { label: 'Reservas', to: '/app/reservas' },
+  { label: 'Pagos', to: '/app/pagos', roles: ['cliente', 'admin'] },
   { label: 'Emergencias', to: '/app/emergencias', roles: ['cliente', 'admin'] },
   { label: 'Profesionales', to: '/app/profesionales', roles: ['cliente', 'admin'] },
   { label: 'Cotizaciones', to: '/app/cotizaciones', roles: ['profesional', 'admin'] },
