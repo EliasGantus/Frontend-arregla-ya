@@ -53,6 +53,22 @@ const selectedSpecialtyNames = (
     .map((category) => category.name);
 };
 
+const profileInitials = (name: string | undefined) =>
+  (name || 'AY')
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((namePart) => namePart.charAt(0))
+    .join('')
+    .toUpperCase();
+
+const workPhotoList = (value: string | undefined) =>
+  (value ?? '')
+    .split('\n')
+    .map((photo) => photo.trim())
+    .filter(Boolean)
+    .slice(0, 4);
+
 export const ProfilePage = () => {
   const { updateUser, user } = useAuth();
   const [savedSettings, setSavedSettings] = useState<ProfileFormValues>(() =>
@@ -84,6 +100,18 @@ export const ProfilePage = () => {
       selectedSpecialtyNames(categoriesQuery.data, savedSettings.specialties),
     [categoriesQuery.data, savedSettings.specialties],
   );
+  const currentName = savedSettings.fullName || user?.fullName || 'Usuario';
+  const currentEmail = query.data?.email ?? user?.email ?? 'Email pendiente';
+  const currentLocation =
+    savedSettings.city && savedSettings.zone
+      ? `${savedSettings.city} / ${savedSettings.zone}`
+      : 'Ubicacion pendiente';
+  const currentPhone = savedSettings.phone || 'Telefono pendiente';
+  const watchedSpecialties = selectedSpecialtyNames(
+    categoriesQuery.data,
+    watchedValues.specialties,
+  );
+  const previewWorkPhotos = workPhotoList(watchedValues.workPhotos);
   const mutation = useMutation({
     mutationFn: async (values: ProfileFormValues) => ({
       updatedUser: await profileService.update(toBackendProfile(values)),
@@ -130,12 +158,14 @@ export const ProfilePage = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <StatusPanel
-        eyebrow="Perfil"
-        title="Configuracion de usuario"
-        description="Actualiza datos personales, foto, contacto y preferencias del perfil segun el tipo de cuenta."
-      />
+    <div className="space-y-4 md:space-y-6">
+      <div className="hidden md:block">
+        <StatusPanel
+          eyebrow="Perfil"
+          title="Configuracion de usuario"
+          description="Actualiza datos personales, foto, contacto y preferencias del perfil segun el tipo de cuenta."
+        />
+      </div>
 
       {mutation.error instanceof ApiError || query.error instanceof ApiError ? (
         <Card className="border border-red-200 bg-red-50">
@@ -157,52 +187,117 @@ export const ProfilePage = () => {
         </Card>
       ) : null}
 
-      <Card>
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div className="flex items-center gap-4">
-            <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-2xl bg-brand-100 text-2xl font-black text-brand-700">
+      <Card className="rounded-[28px] bg-white p-4 shadow-lg shadow-slate-200/70 md:rounded-3xl md:p-6">
+        <div className="flex flex-col items-center gap-4 text-center md:flex-row md:items-center md:justify-between md:text-left">
+          <div className="flex flex-col items-center gap-4 md:flex-row md:text-left">
+            <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-ink text-3xl font-black text-white shadow-lg shadow-slate-300/70 md:h-20 md:w-20 md:rounded-2xl md:bg-brand-100 md:text-2xl md:text-brand-700">
               {savedSettings.profilePhotoUrl ? (
                 <img
-                  alt={`Foto de ${savedSettings.fullName}`}
+                  alt={`Foto de ${currentName}`}
                   className="h-full w-full object-cover"
                   src={savedSettings.profilePhotoUrl}
                 />
               ) : (
-                savedSettings.fullName.slice(0, 1).toUpperCase()
+                profileInitials(currentName)
               )}
             </div>
-            <div>
+            <div className="min-w-0">
               <h3 className="text-2xl font-black text-slate-950">
-                {savedSettings.fullName || user?.fullName}
+                {currentName}
               </h3>
-              <p className="mt-1 break-all text-sm text-slate-600">
-                {query.data?.email ?? user?.email}
+              <p className="mt-1 break-all text-sm font-medium text-slate-500">
+                {currentEmail}
               </p>
-              <div className="mt-2 flex flex-wrap gap-2">
-                <Badge>{user ? roleCopy[user.role] : 'Usuario'}</Badge>
+              <div className="mt-3 flex flex-wrap justify-center gap-2 md:justify-start">
+                <Badge className="bg-accent-50 text-accent-700">
+                  {user ? roleCopy[user.role] : 'Usuario'}
+                </Badge>
                 {savedSettings.city && savedSettings.zone ? (
-                  <Badge>
-                    {savedSettings.city} / {savedSettings.zone}
-                  </Badge>
+                  <Badge>{currentLocation}</Badge>
                 ) : null}
               </div>
             </div>
           </div>
-          {savedSettings.phone ? (
-            <div className="rounded-2xl bg-slate-50 px-4 py-3">
+          <div className="hidden rounded-2xl bg-slate-50 px-4 py-3 md:block">
+            <p className="text-xs font-semibold uppercase text-slate-400">
+              Telefono
+            </p>
+            <p className="mt-1 font-bold text-slate-950">{currentPhone}</p>
+          </div>
+        </div>
+
+        <div className="mt-5 grid gap-3 md:hidden">
+          {[
+            { label: 'Email', value: currentEmail },
+            { label: 'Telefono', value: currentPhone },
+            { label: 'Ubicacion', value: currentLocation },
+            {
+              label: 'Estado',
+              value:
+                user?.role === 'profesional'
+                  ? savedSettings.available
+                    ? 'Disponible ahora'
+                    : 'Agenda pausada'
+                  : 'Cuenta cliente',
+            },
+          ].map((row) => (
+            <div
+              className="flex items-center justify-between gap-4 rounded-2xl bg-slate-50 px-4 py-3 text-left"
+              key={row.label}
+            >
               <p className="text-xs font-semibold uppercase text-slate-400">
-                Telefono
+                {row.label}
               </p>
-              <p className="mt-1 font-bold text-slate-950">
-                {savedSettings.phone}
+              <p className="min-w-0 break-words text-right text-sm font-bold text-slate-950">
+                {row.value}
               </p>
             </div>
-          ) : null}
+          ))}
         </div>
+
+        <a
+          className="mt-5 inline-flex min-h-11 w-full items-center justify-center rounded-2xl bg-accent-500 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-accent-500/30 transition hover:bg-accent-400 md:hidden"
+          href="#editar-perfil"
+        >
+          Editar perfil
+        </a>
       </Card>
 
+      {user?.role === 'profesional' ? (
+        <Card className="rounded-[28px] bg-white p-4 shadow-lg shadow-slate-200/70 md:hidden">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase text-slate-400">
+                Profesional
+              </p>
+              <p className="mt-1 text-lg font-black text-slate-950">
+                Servicios activos
+              </p>
+            </div>
+            <Badge className="bg-accent-50 text-accent-700">
+              {savedSettings.available ? 'Activo' : 'Pausado'}
+            </Badge>
+          </div>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {(previewSpecialties.length ? previewSpecialties : ['Sin definir'])
+              .slice(0, 3)
+              .map((specialty) => (
+                <span
+                  className="rounded-full bg-brand-50 px-3 py-1 text-xs font-semibold text-brand-700"
+                  key={specialty}
+                >
+                  {specialty}
+                </span>
+              ))}
+          </div>
+        </Card>
+      ) : null}
+
       <div className="grid gap-4 xl:grid-cols-[1fr_0.85fr]">
-        <Card>
+        <Card
+          className="rounded-[28px] bg-white p-4 shadow-lg shadow-slate-200/70 md:rounded-3xl md:p-6"
+          id="editar-perfil"
+        >
           <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <h2 className="text-xl font-bold text-slate-950">
@@ -320,6 +415,7 @@ export const ProfilePage = () => {
               <Button
                 className="w-full sm:w-auto"
                 disabled={mutation.isPending}
+                variant="secondary"
                 type="submit"
               >
                 {mutation.isPending ? 'Guardando...' : 'Guardar cambios'}
@@ -328,7 +424,7 @@ export const ProfilePage = () => {
           </form>
         </Card>
 
-        <Card className="xl:sticky xl:top-6 xl:self-start">
+        <Card className="hidden md:block xl:sticky xl:top-6 xl:self-start">
           <p className="text-sm font-semibold uppercase text-slate-400">
             {user?.role === 'profesional' ? 'Vista publica' : 'Vista de cuenta'}
           </p>
@@ -371,14 +467,8 @@ export const ProfilePage = () => {
                     Especialidades publicas
                   </p>
                   <div className="mt-2 flex flex-wrap gap-2">
-                    {(selectedSpecialtyNames(
-                      categoriesQuery.data,
-                      watchedValues.specialties,
-                    ).length
-                      ? selectedSpecialtyNames(
-                          categoriesQuery.data,
-                          watchedValues.specialties,
-                        )
+                    {(watchedSpecialties.length
+                      ? watchedSpecialties
                       : previewSpecialties
                     ).map((specialty) => (
                       <span
@@ -401,19 +491,14 @@ export const ProfilePage = () => {
                     Trabajos realizados
                   </p>
                   <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                    {(watchedValues.workPhotos ?? '')
-                      .split('\n')
-                      .map((photo) => photo.trim())
-                      .filter(Boolean)
-                      .slice(0, 4)
-                      .map((photo) => (
-                        <img
-                          alt="Trabajo realizado"
-                          className="h-28 w-full rounded-2xl border border-slate-200 object-cover"
-                          key={photo}
-                          src={photo}
-                        />
-                      ))}
+                    {previewWorkPhotos.map((photo) => (
+                      <img
+                        alt="Trabajo realizado"
+                        className="h-28 w-full rounded-2xl border border-slate-200 object-cover"
+                        key={photo}
+                        src={photo}
+                      />
+                    ))}
                     {!watchedValues.workPhotos?.trim() ? (
                       <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-sm text-slate-500 sm:col-span-2">
                         Agrega fotos para enriquecer el perfil publico.
