@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
-import { Link } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 
 import { useAuth } from '@/features/auth/context/auth-context';
 import { categoriesService } from '@/features/service-requests/services/categories-service';
@@ -21,6 +21,8 @@ import { StatusPanel } from '@/shared/ui/status-panel';
 import { Textarea } from '@/shared/ui/textarea';
 
 export const ServiceRequestsPage = () => <ServiceRequestsContent />;
+
+export const ServiceRequestDetailPage = () => <ServiceRequestDetailContent />;
 
 const statusCopy: Record<ServiceRequestStatus, string> = {
   draft: 'Borrador',
@@ -55,6 +57,14 @@ const statusCount = (
   requests: ServiceRequest[],
   statuses: ServiceRequestStatus[],
 ) => requests.filter((request) => statuses.includes(request.status)).length;
+
+const requestProgress: Record<ServiceRequestStatus, string> = {
+  draft: 'Datos iniciales',
+  open: 'Esperando cotizaciones',
+  quoted: 'Cotizaciones recibidas',
+  assigned: 'Profesional asignado',
+  cancelled: 'Solicitud cancelada',
+};
 
 const ServiceRequestsContent = () => {
   const { user } = useAuth();
@@ -391,18 +401,177 @@ const ServiceRequestsContent = () => {
                   </span>
                 ) : null}
               </div>
-              {isProfessionalView ? (
+              <div className="mt-4 flex flex-col gap-2 sm:flex-row">
                 <Link
-                  className="mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-2xl bg-accent-500 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-accent-500/30 transition hover:bg-accent-400 sm:w-auto"
-                  to="/app/cotizaciones"
+                  className="inline-flex min-h-11 w-full items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-brand-300 hover:text-brand-700 sm:w-auto"
+                  to={`/app/solicitudes/${request.id}`}
                 >
-                  Cotizar solicitud
+                  Ver detalle
                 </Link>
-              ) : null}
+                {isProfessionalView ? (
+                  <Link
+                    className="inline-flex min-h-11 w-full items-center justify-center rounded-2xl bg-accent-500 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-accent-500/30 transition hover:bg-accent-400 sm:w-auto"
+                    to="/app/cotizaciones"
+                  >
+                    Cotizar solicitud
+                  </Link>
+                ) : null}
+              </div>
             </Card>
           ))}
         </div>
       </section>
+    </div>
+  );
+};
+
+const ServiceRequestDetailContent = () => {
+  const { user } = useAuth();
+  const { requestId } = useParams();
+  const query = useQuery({
+    queryKey: ['service-requests'],
+    queryFn: () => serviceRequestsService.list(),
+  });
+  const request = (query.data ?? []).find((item) => item.id === requestId);
+  const isProfessionalView = user?.role === 'profesional';
+
+  if (query.error instanceof ApiError) {
+    return (
+      <div className="space-y-4 md:space-y-6">
+        <Card className="border border-amber-200 bg-amber-50">
+          <p className="text-sm font-semibold text-amber-800">
+            Backend no disponible
+          </p>
+          <p className="mt-2 text-sm text-amber-700">{query.error.message}</p>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!request && !query.isLoading) {
+    return (
+      <div className="space-y-4 md:space-y-6">
+        <Card className="rounded-[28px] bg-white p-5 text-center shadow-lg shadow-slate-200/70 md:rounded-3xl">
+          <h1 className="text-xl font-black text-slate-950">
+            Solicitud no encontrada
+          </h1>
+          <p className="mt-2 text-sm text-slate-600">
+            Volve al listado para revisar las solicitudes disponibles.
+          </p>
+          <Link
+            className="mt-4 inline-flex min-h-11 items-center justify-center rounded-2xl bg-accent-500 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-accent-500/30 transition hover:bg-accent-400"
+            to="/app/solicitudes"
+          >
+            Volver a solicitudes
+          </Link>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!request) {
+    return (
+      <div className="space-y-4 md:space-y-6">
+        <Card className="rounded-[28px] bg-white p-5 shadow-lg shadow-slate-200/70 md:rounded-3xl">
+          <p className="text-sm font-semibold text-slate-600">
+            Cargando detalle de solicitud...
+          </p>
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4 md:space-y-6">
+      <div className="hidden md:block">
+        <StatusPanel
+          eyebrow="Detalle"
+          title={request.title}
+          description="Vista de detalle conectada al listado de solicitudes."
+        />
+      </div>
+
+      <Link
+        className="inline-flex min-h-10 items-center rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-600 shadow-sm shadow-slate-200/70 md:hidden"
+        to="/app/solicitudes"
+      >
+        Volver
+      </Link>
+
+      <Card className="rounded-[28px] !bg-ink p-5 text-white shadow-lg shadow-slate-300/70 md:rounded-3xl md:p-6">
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-accent-200">
+              Detalle solicitud
+            </p>
+            <h1 className="mt-2 text-2xl font-black leading-tight md:text-3xl">
+              {request.title}
+            </h1>
+            <p className="mt-3 text-sm leading-6 text-slate-200">
+              {request.description}
+            </p>
+          </div>
+          <span
+            className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${statusTone[request.status]}`}
+          >
+            {statusCopy[request.status]}
+          </span>
+        </div>
+      </Card>
+
+      <div className="grid gap-4 md:grid-cols-[1fr_0.8fr]">
+        <Card className="rounded-[28px] bg-white p-4 shadow-lg shadow-slate-200/70 md:rounded-3xl md:p-6">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
+            Resumen
+          </p>
+          <div className="mt-4 grid gap-3">
+            {[
+              { label: 'Categoria', value: request.category.name },
+              {
+                label: 'Ubicacion',
+                value: `${request.city} / ${request.zone}`,
+              },
+              { label: 'Presupuesto', value: request.budget || 'A convenir' },
+              {
+                label: 'Publicado',
+                value: formatRequestDate(request.createdAt),
+              },
+            ].map((item) => (
+              <div
+                className="rounded-2xl bg-slate-50 px-4 py-3"
+                key={item.label}
+              >
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
+                  {item.label}
+                </p>
+                <p className="mt-1 text-sm font-bold text-slate-950">
+                  {item.value}
+                </p>
+              </div>
+            ))}
+          </div>
+        </Card>
+
+        <Card className="rounded-[28px] bg-white p-4 shadow-lg shadow-slate-200/70 md:rounded-3xl md:p-6">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
+            Estado
+          </p>
+          <h2 className="mt-2 text-xl font-black text-slate-950">
+            {requestProgress[request.status]}
+          </h2>
+          <p className="mt-2 text-sm leading-6 text-slate-600">
+            {isProfessionalView
+              ? 'Revisa el alcance antes de preparar una propuesta para el cliente.'
+              : 'Usa esta vista para seguir el avance y comparar las propuestas que recibas.'}
+          </p>
+          <Link
+            className="mt-5 inline-flex min-h-11 w-full items-center justify-center rounded-2xl bg-accent-500 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-accent-500/30 transition hover:bg-accent-400"
+            to={isProfessionalView ? '/app/cotizaciones' : '/app/solicitudes'}
+          >
+            {isProfessionalView ? 'Cotizar solicitud' : 'Ver solicitudes'}
+          </Link>
+        </Card>
+      </div>
     </div>
   );
 };

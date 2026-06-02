@@ -19,7 +19,10 @@ import {
 } from '@/features/professionals/pages/professionals-page';
 import { QuotesPage } from '@/features/quotes/pages/quotes-page';
 import { ReviewsPage } from '@/features/reviews/pages/reviews-page';
-import { ServiceRequestsPage } from '@/features/service-requests/pages/service-requests-page';
+import {
+  ServiceRequestDetailPage,
+  ServiceRequestsPage,
+} from '@/features/service-requests/pages/service-requests-page';
 
 export const router = createBrowserRouter([
   {
@@ -52,6 +55,10 @@ export const router = createBrowserRouter([
           {
             path: 'solicitudes',
             element: <ServiceRequestsPage />,
+          },
+          {
+            path: 'solicitudes/:requestId',
+            element: <ServiceRequestDetailPage />,
           },
           {
             path: 'reservas',
