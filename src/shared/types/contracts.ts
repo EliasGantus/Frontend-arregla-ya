@@ -15,8 +15,7 @@ export const registerSchema = loginSchema.extend({
 });
 
 export const serviceRequestSchema = z.object({
-  title: z.string().min(4, 'Describe mejor el trabajo.'),
-  description: z.string().min(12, 'Agrega más detalle para los profesionales.'),
+  title: z.string().min(12, 'Describí mejor el problema (mín. 12 caracteres).'),
   categoryId: z.string().min(1, 'Selecciona una categoría.'),
   city: z.string().min(2, 'Ingresa una ciudad valida.'),
   zone: z.string().min(2, 'Ingresa una zona o barrio.'),

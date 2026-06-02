@@ -22,22 +22,33 @@ const metricsByRole = {
   ],
 };
 
-const actionByRole = {
-  cliente: {
-    title: 'Nueva solicitud',
-    description: 'Publica lo que necesitas',
-    path: '/app/solicitudes',
-  },
-  profesional: {
-    title: 'Buscar trabajos',
-    description: 'Revisa oportunidades disponibles',
-    path: '/app/cotizaciones',
-  },
-  admin: {
-    title: 'Administrar plataforma',
-    description: 'Revisa usuarios y solicitudes',
-    path: '/app/admin',
-  },
+const actionByRole: Record<string, { title: string; description: string; path: string }[]> = {
+  cliente: [
+    {
+      title: 'Nueva solicitud',
+      description: 'Publica lo que necesitas',
+      path: '/app/solicitudes',
+    },
+  ],
+  profesional: [
+    {
+      title: 'Buscar trabajos',
+      description: 'Explora solicitudes abiertas',
+      path: '/app/solicitudes',
+    },
+    {
+      title: 'Mis cotizaciones',
+      description: 'Seguimiento de propuestas',
+      path: '/app/cotizaciones',
+    },
+  ],
+  admin: [
+    {
+      title: 'Administrar plataforma',
+      description: 'Revisa usuarios y solicitudes',
+      path: '/app/admin',
+    },
+  ],
 };
 
 const introByRole = {
@@ -57,7 +68,7 @@ export const DashboardPage = () => {
   const { user } = useAuth();
   const role = user?.role ?? 'cliente';
   const metrics = metricsByRole[role];
-  const primaryAction = actionByRole[role];
+  const actions = actionByRole[role];
 
   return (
     <div className="space-y-5 md:space-y-6">
@@ -98,23 +109,28 @@ export const DashboardPage = () => {
         <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
           Acciones rapidas
         </p>
-        <button
-          className="flex min-h-20 w-full items-center justify-between gap-4 rounded-2xl bg-white px-4 py-3 text-left shadow-xl shadow-slate-200/70 transition hover:-translate-y-0.5 hover:shadow-2xl"
-          onClick={() => void navigate(primaryAction.path)}
-          type="button"
-        >
-          <span>
-            <span className="block font-bold text-slate-950">
-              {primaryAction.title}
+        {actions.map((action) => (
+          <button
+            key={action.path}
+            className="flex min-h-20 w-full items-center justify-between gap-4 rounded-2xl bg-white px-4 py-3 text-left shadow-xl shadow-slate-200/70 transition hover:-translate-y-0.5 hover:shadow-2xl"
+            onClick={() => void navigate(action.path)}
+            type="button"
+          >
+            <span>
+              <span className="block font-bold text-slate-950">
+                {action.title}
+              </span>
+              <span className="mt-1 block text-sm text-slate-500">
+                {action.description}
+              </span>
             </span>
-            <span className="mt-1 block text-sm text-slate-500">
-              {primaryAction.description}
+            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-accent-200 bg-accent-50 text-accent-500">
+              <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                <path d="M5 12h14M13 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
             </span>
-          </span>
-          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-accent-200 bg-accent-50 text-xl font-black text-accent-500">
-            &gt;
-          </span>
-        </button>
+          </button>
+        ))}
       </section>
     </div>
   );

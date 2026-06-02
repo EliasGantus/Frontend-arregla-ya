@@ -61,6 +61,7 @@ export const LoginPage = ({ initialMode = 'login' }: LoginPageProps) => {
   const { isAuthenticated, login, register: registerUser } = useAuth();
   const [mode, setMode] = useState<AuthMode>(initialMode);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [showForgotMessage, setShowForgotMessage] = useState(false);
   const loginForm = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -210,6 +211,21 @@ export const LoginPage = ({ initialMode = 'login' }: LoginPageProps) => {
                   {...loginForm.register('password')}
                 />
               </label>
+
+              <div className="text-right">
+                <button
+                  type="button"
+                  className="text-xs text-slate-400 transition hover:text-slate-600"
+                  onClick={() => setShowForgotMessage((prev) => !prev)}
+                >
+                  ¿Olvidaste tu contraseña?
+                </button>
+                {showForgotMessage ? (
+                  <p className="mt-1 text-xs text-slate-500">
+                    Esta función no está disponible aún. Contactá al administrador.
+                  </p>
+                ) : null}
+              </div>
 
               {errorMessage ? (
                 <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">

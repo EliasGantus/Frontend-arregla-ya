@@ -7,6 +7,8 @@ export interface AuthUser {
   role: UserRole;
   city?: string;
   zone?: string;
+  ratingAverage?: number;
+  ratingCount?: number;
 }
 
 export interface AuthTokens {
@@ -76,6 +78,7 @@ export type ServiceRequestStatus =
   | 'open'
   | 'quoted'
   | 'assigned'
+  | 'completed'
   | 'cancelled';
 
 export interface ServiceRequest {
@@ -87,6 +90,7 @@ export interface ServiceRequest {
   city: string;
   zone: string;
   budget?: string;
+  photos: string[];
   createdAt: string;
 }
 
@@ -97,6 +101,7 @@ export interface CreateServiceRequestInput {
   city: string;
   zone: string;
   budget?: string;
+  photos?: string[];
 }
 
 export interface UpdateProfileInput {
@@ -110,6 +115,7 @@ export type QuoteStatus = 'pending' | 'accepted' | 'rejected' | 'withdrawn';
 export interface Quote {
   id: string;
   serviceRequestId: string;
+  serviceRequestTitle: string;
   professionalName: string;
   professionalId: string;
   amount: string;
