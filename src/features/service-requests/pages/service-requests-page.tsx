@@ -6,7 +6,7 @@ import { useAuth } from '@/features/auth/context/auth-context';
 import { categoriesService } from '@/features/service-requests/services/categories-service';
 import { serviceRequestsService } from '@/features/service-requests/services/service-requests-service';
 import { ApiError } from '@/shared/api/api-error';
-import type { ServiceRequestStatus } from '@/shared/types/api';
+import type { ServiceRequest, ServiceRequestStatus } from '@/shared/types/api';
 import {
   serviceRequestSchema,
   type ServiceRequestFormValues,
@@ -28,6 +28,32 @@ const statusCopy: Record<ServiceRequestStatus, string> = {
   assigned: 'Asignada',
   cancelled: 'Cancelada',
 };
+
+const statusTone: Record<ServiceRequestStatus, string> = {
+  draft: 'bg-slate-100 text-slate-600',
+  open: 'bg-accent-50 text-accent-700',
+  quoted: 'bg-brand-50 text-brand-700',
+  assigned: 'bg-emerald-50 text-emerald-700',
+  cancelled: 'bg-red-50 text-red-700',
+};
+
+const formatRequestDate = (value: string) => {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return 'Fecha pendiente';
+  }
+
+  return new Intl.DateTimeFormat('es-AR', {
+    day: '2-digit',
+    month: 'short',
+  }).format(date);
+};
+
+const statusCount = (
+  requests: ServiceRequest[],
+  statuses: ServiceRequestStatus[],
+) => requests.filter((request) => statuses.includes(request.status)).length;
 
 const ServiceRequestsContent = () => {
   const { user } = useAuth();
@@ -74,6 +100,14 @@ const ServiceRequestsContent = () => {
 
   const canCreate = user?.role === 'cliente' || user?.role === 'admin';
   const requests = query.data ?? [];
+  const trackedRequests = requests.filter(
+    (request) => request.status !== 'cancelled',
+  );
+  const requestStats = [
+    { label: 'Abiertas', value: statusCount(requests, ['open']) },
+    { label: 'Cotizadas', value: statusCount(requests, ['quoted']) },
+    { label: 'Asignadas', value: statusCount(requests, ['assigned']) },
+  ];
   const submitRequest = (values: ServiceRequestFormValues) => {
     mutation.mutate(values);
   };
@@ -121,7 +155,10 @@ const ServiceRequestsContent = () => {
       ) : null}
 
       {canCreate ? (
-        <Card className="rounded-[28px] bg-white p-4 shadow-lg shadow-slate-200/70 md:rounded-3xl md:p-6">
+        <Card
+          className="rounded-[28px] bg-white p-4 shadow-lg shadow-slate-200/70 md:rounded-3xl md:p-6"
+          id="nueva-solicitud"
+        >
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="min-w-0">
               <h2 className="text-2xl font-black text-slate-950 md:text-xl md:font-bold">
@@ -216,57 +253,111 @@ const ServiceRequestsContent = () => {
         </Card>
       ) : null}
 
-      <div className="space-y-3">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400 md:hidden">
-              Seguimiento
-            </p>
-            <h2 className="text-lg font-black text-slate-950 md:text-xl">
-              Mis solicitudes
-            </h2>
+      <section className="space-y-3">
+        <div className="rounded-[28px] bg-white p-4 shadow-lg shadow-slate-200/70 md:rounded-3xl md:p-6">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400 md:hidden">
+                Seguimiento
+              </p>
+              <h2 className="text-xl font-black text-slate-950 md:text-xl">
+                Mis solicitudes
+              </h2>
+              <p className="mt-1 text-sm text-slate-500">
+                Revisa el estado de tus pedidos y las cotizaciones recibidas.
+              </p>
+            </div>
+            <Badge>{trackedRequests.length} activas</Badge>
           </div>
-          <Badge>{requests.length} activas</Badge>
+
+          <div className="mt-4 grid grid-cols-3 gap-2">
+            {requestStats.map((stat) => (
+              <div
+                className="rounded-2xl bg-slate-50 px-3 py-3 text-center"
+                key={stat.label}
+              >
+                <p className="text-lg font-black text-slate-950">
+                  {stat.value}
+                </p>
+                <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-400">
+                  {stat.label}
+                </p>
+              </div>
+            ))}
+          </div>
         </div>
 
         <div className="grid gap-4">
           {!requests.length && !query.isLoading ? (
-            <Card className="rounded-[28px] bg-white p-5 text-center shadow-lg shadow-slate-200/70 md:rounded-3xl md:text-left">
-              <p className="text-sm text-slate-600">
-                No hay solicitudes disponibles para tu rol en este momento.
+            <Card className="rounded-[28px] bg-white p-5 text-center shadow-lg shadow-slate-200/70 md:rounded-3xl">
+              <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-accent-50 text-xl font-black text-accent-600">
+                0
+              </div>
+              <h3 className="mt-4 text-lg font-black text-slate-950">
+                Todavia no tenes solicitudes
+              </h3>
+              <p className="mx-auto mt-2 max-w-sm text-sm text-slate-600">
+                Cuando crees un pedido, lo vas a ver aca con su estado y datos
+                principales.
               </p>
+              {canCreate ? (
+                <a
+                  className="mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-2xl bg-accent-500 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-accent-500/30 transition hover:bg-accent-400 sm:w-auto"
+                  href="#nueva-solicitud"
+                >
+                  Crear una solicitud
+                </a>
+              ) : null}
             </Card>
           ) : null}
           {requests.map((request) => (
             <Card
               key={request.id}
-              className="flex flex-col gap-3 rounded-[28px] bg-white p-4 shadow-lg shadow-slate-200/70 md:flex-row md:items-center md:justify-between md:rounded-3xl md:p-6"
+              className="rounded-[28px] bg-white p-4 shadow-lg shadow-slate-200/70 md:rounded-3xl md:p-6"
             >
-              <div className="min-w-0">
-                <p className="text-lg font-bold text-slate-950">
-                  {request.title}
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
+                    {formatRequestDate(request.createdAt)}
+                  </p>
+                  <h3 className="mt-1 text-lg font-black leading-tight text-slate-950">
+                    {request.title}
+                  </h3>
+                </div>
+                <span
+                  className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${statusTone[request.status]}`}
+                >
+                  {statusCopy[request.status]}
+                </span>
+              </div>
+
+              <p className="mt-3 text-sm leading-6 text-slate-600">
+                {request.description}
+              </p>
+
+              <div className="mt-4 rounded-2xl bg-slate-50 px-4 py-3">
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
+                  Ubicacion
                 </p>
-                <p className="mt-1 text-sm text-slate-500">
+                <p className="mt-1 text-sm font-bold text-slate-950">
                   {request.city} / {request.zone}
                 </p>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <span className="rounded-full bg-brand-50 px-3 py-1 text-xs font-semibold text-brand-700">
-                    {request.category.name}
-                  </span>
-                  {request.budget ? (
-                    <span className="rounded-full bg-accent-50 px-3 py-1 text-xs font-semibold text-accent-700">
-                      {request.budget}
-                    </span>
-                  ) : null}
-                </div>
               </div>
-              <div className="self-start rounded-full bg-ink px-4 py-2 text-sm font-semibold text-white md:self-auto">
-                {statusCopy[request.status]}
+
+              <div className="mt-4 flex flex-wrap gap-2">
+                <span className="rounded-full bg-brand-50 px-3 py-1 text-xs font-semibold text-brand-700">
+                  {request.category.name}
+                </span>
+                {request.budget ? (
+                  <span className="rounded-full bg-accent-50 px-3 py-1 text-xs font-semibold text-accent-700">
+                    {request.budget}
+                  </span>
+                ) : null}
               </div>
             </Card>
           ))}
         </div>
-      </div>
+      </section>
     </div>
   );
 };
