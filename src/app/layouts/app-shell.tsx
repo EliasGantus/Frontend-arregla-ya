@@ -47,8 +47,15 @@ export const AppShell = () => {
     ),
   );
   const activeItem =
-    availableItems.filter((item) => location.pathname === item.to).at(0) ??
-    availableItems[0];
+    availableItems
+      .filter((item) =>
+        item.to === '/app'
+          ? location.pathname === item.to
+          : location.pathname === item.to ||
+            location.pathname.startsWith(`${item.to}/`),
+      )
+      .sort((current, next) => next.to.length - current.to.length)
+      .at(0) ?? availableItems[0];
 
   return (
     <div className="min-h-screen overflow-x-clip bg-[#eef2f8] text-ink md:bg-gradient-to-b md:from-mist md:via-white md:to-slate-100">
