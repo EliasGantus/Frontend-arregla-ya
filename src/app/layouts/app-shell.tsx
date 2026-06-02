@@ -16,14 +16,14 @@ const mobileLabelByPath: Record<string, string> = {
   '/app': 'Inicio',
   '/app/perfil': 'Perfil',
   '/app/solicitudes': 'Solicitudes',
-  '/app/cotizaciones': 'Solicitudes',
+  '/app/cotizaciones': 'Cotizaciones',
 };
 
 const mobileIconByPath: Record<string, string> = {
   '/app': 'H',
   '/app/perfil': 'P',
   '/app/solicitudes': 'S',
-  '/app/cotizaciones': 'S',
+  '/app/cotizaciones': 'C',
 };
 
 const getInitials = (name: string | undefined) =>
@@ -56,6 +56,11 @@ export const AppShell = () => {
       )
       .sort((current, next) => next.to.length - current.to.length)
       .at(0) ?? availableItems[0];
+  const visibleMobileItems =
+    activeItem &&
+    !mobileItems.slice(0, 3).some((item) => item.to === activeItem.to)
+      ? [...mobileItems.slice(0, 2), activeItem]
+      : mobileItems.slice(0, 3);
 
   return (
     <div className="min-h-screen overflow-x-clip bg-[#eef2f8] text-ink md:bg-gradient-to-b md:from-mist md:via-white md:to-slate-100">
@@ -177,7 +182,7 @@ export const AppShell = () => {
 
       <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white/95 px-4 pb-3 pt-2 shadow-2xl shadow-slate-900/15 backdrop-blur md:hidden">
         <div className="mx-auto grid max-w-md grid-cols-3 gap-2">
-          {mobileItems.slice(0, 3).map((item) => (
+          {visibleMobileItems.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
