@@ -1,6 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
+import { Link } from 'react-router-dom';
 
 import { useAuth } from '@/features/auth/context/auth-context';
 import { categoriesService } from '@/features/service-requests/services/categories-service';
@@ -103,11 +104,49 @@ const ServiceRequestsContent = () => {
   const trackedRequests = requests.filter(
     (request) => request.status !== 'cancelled',
   );
+  const openRequests = statusCount(requests, ['open']);
+  const isProfessionalView = user?.role === 'profesional';
   const requestStats = [
-    { label: 'Abiertas', value: statusCount(requests, ['open']) },
+    { label: 'Abiertas', value: openRequests },
     { label: 'Cotizadas', value: statusCount(requests, ['quoted']) },
     { label: 'Asignadas', value: statusCount(requests, ['assigned']) },
   ];
+  const mobileHero = canCreate
+    ? {
+        eyebrow: 'Nueva solicitud',
+        title: 'Contanos que paso',
+        description:
+          'Completa los datos basicos para que un profesional pueda cotizar el trabajo.',
+        pill: 'Paso 1',
+      }
+    : {
+        eyebrow: 'Solicitudes',
+        title: 'Trabajos disponibles',
+        description:
+          'Revisa pedidos abiertos, compara alcance y prepara tu cotizacion.',
+        pill: `${openRequests} abiertas`,
+      };
+  const trackingCopy = canCreate
+    ? {
+        eyebrow: 'Seguimiento',
+        title: 'Mis solicitudes',
+        description:
+          'Revisa el estado de tus pedidos y las cotizaciones recibidas.',
+        badge: `${trackedRequests.length} activas`,
+        emptyTitle: 'Todavia no tenes solicitudes',
+        emptyDescription:
+          'Cuando crees un pedido, lo vas a ver aca con su estado y datos principales.',
+      }
+    : {
+        eyebrow: 'Disponibles',
+        title: 'Solicitudes abiertas',
+        description:
+          'Encuentra trabajos nuevos y revisa cuales necesitan una propuesta.',
+        badge: `${openRequests} abiertas`,
+        emptyTitle: 'No hay solicitudes disponibles',
+        emptyDescription:
+          'Cuando aparezcan pedidos abiertos para tu zona u oficio, los vas a ver aca.',
+      };
   const submitRequest = (values: ServiceRequestFormValues) => {
     mutation.mutate(values);
   };
@@ -126,16 +165,15 @@ const ServiceRequestsContent = () => {
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-accent-200">
-              Nueva solicitud
+              {mobileHero.eyebrow}
             </p>
-            <h1 className="mt-2 text-2xl font-black">Contanos que paso</h1>
+            <h1 className="mt-2 text-2xl font-black">{mobileHero.title}</h1>
             <p className="mt-2 text-sm leading-6 text-slate-200">
-              Completa los datos basicos para que un profesional pueda cotizar
-              el trabajo.
+              {mobileHero.description}
             </p>
           </div>
-          <div className="rounded-full bg-white px-3 py-1 text-xs font-black uppercase tracking-[0.14em] text-ink">
-            Paso 1
+          <div className="shrink-0 rounded-full bg-white px-3 py-1 text-xs font-black uppercase tracking-[0.14em] text-ink">
+            {mobileHero.pill}
           </div>
         </div>
       </Card>
@@ -258,16 +296,16 @@ const ServiceRequestsContent = () => {
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400 md:hidden">
-                Seguimiento
+                {trackingCopy.eyebrow}
               </p>
               <h2 className="text-xl font-black text-slate-950 md:text-xl">
-                Mis solicitudes
+                {trackingCopy.title}
               </h2>
               <p className="mt-1 text-sm text-slate-500">
-                Revisa el estado de tus pedidos y las cotizaciones recibidas.
+                {trackingCopy.description}
               </p>
             </div>
-            <Badge>{trackedRequests.length} activas</Badge>
+            <Badge>{trackingCopy.badge}</Badge>
           </div>
 
           <div className="mt-4 grid grid-cols-3 gap-2">
@@ -294,11 +332,10 @@ const ServiceRequestsContent = () => {
                 0
               </div>
               <h3 className="mt-4 text-lg font-black text-slate-950">
-                Todavia no tenes solicitudes
+                {trackingCopy.emptyTitle}
               </h3>
               <p className="mx-auto mt-2 max-w-sm text-sm text-slate-600">
-                Cuando crees un pedido, lo vas a ver aca con su estado y datos
-                principales.
+                {trackingCopy.emptyDescription}
               </p>
               {canCreate ? (
                 <a
@@ -354,6 +391,14 @@ const ServiceRequestsContent = () => {
                   </span>
                 ) : null}
               </div>
+              {isProfessionalView ? (
+                <Link
+                  className="mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-2xl bg-accent-500 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-accent-500/30 transition hover:bg-accent-400 sm:w-auto"
+                  to="/app/cotizaciones"
+                >
+                  Cotizar solicitud
+                </Link>
+              ) : null}
             </Card>
           ))}
         </div>
