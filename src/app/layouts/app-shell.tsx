@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 
 import { useAuth } from '@/features/auth/context/auth-context';
@@ -19,11 +20,40 @@ const mobileLabelByPath: Record<string, string> = {
   '/app/cotizaciones': 'Cotizaciones',
 };
 
-const mobileIconByPath: Record<string, string> = {
-  '/app': 'H',
-  '/app/perfil': 'P',
-  '/app/solicitudes': 'S',
-  '/app/cotizaciones': 'C',
+const NavIconHome = () => (
+  <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+    <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z" strokeLinejoin="round" />
+    <path d="M9 21V12h6v9" strokeLinejoin="round" />
+  </svg>
+);
+
+const NavIconUser = () => (
+  <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+    <circle cx="12" cy="8" r="4" />
+    <path d="M4 20c0-3.866 3.582-7 8-7s8 3.134 8 7" strokeLinecap="round" />
+  </svg>
+);
+
+const NavIconFile = () => (
+  <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+    <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z" strokeLinejoin="round" />
+    <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" strokeLinecap="round" />
+  </svg>
+);
+
+const NavIconWallet = () => (
+  <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+    <rect height="14" rx="2" width="20" x="2" y="5" />
+    <path d="M2 10h20" strokeLinecap="round" />
+    <circle cx="16" cy="15" fill="currentColor" r="1" stroke="none" />
+  </svg>
+);
+
+const mobileIconByPath: Record<string, React.ReactNode> = {
+  '/app': <NavIconHome />,
+  '/app/perfil': <NavIconUser />,
+  '/app/solicitudes': <NavIconFile />,
+  '/app/cotizaciones': <NavIconWallet />,
 };
 
 const getInitials = (name: string | undefined) =>
@@ -56,11 +86,7 @@ export const AppShell = () => {
       )
       .sort((current, next) => next.to.length - current.to.length)
       .at(0) ?? availableItems[0];
-  const visibleMobileItems =
-    activeItem &&
-    !mobileItems.slice(0, 3).some((item) => item.to === activeItem.to)
-      ? [...mobileItems.slice(0, 2), activeItem]
-      : mobileItems.slice(0, 3);
+  const visibleMobileItems = mobileItems;
 
   return (
     <div className="min-h-screen overflow-x-clip bg-[#eef2f8] text-ink md:bg-gradient-to-b md:from-mist md:via-white md:to-slate-100">
@@ -181,7 +207,7 @@ export const AppShell = () => {
       </div>
 
       <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white/95 px-4 pb-3 pt-2 shadow-2xl shadow-slate-900/15 backdrop-blur md:hidden">
-        <div className="mx-auto grid max-w-md grid-cols-3 gap-2">
+        <div className={`mx-auto grid max-w-md gap-2 ${visibleMobileItems.length >= 4 ? 'grid-cols-4' : 'grid-cols-3'}`}>
           {visibleMobileItems.map((item) => (
             <NavLink
               key={item.to}
@@ -196,10 +222,10 @@ export const AppShell = () => {
                 ].join(' ')
               }
             >
-              <span className="text-lg leading-none">
-                {mobileIconByPath[item.to] ?? '.'}
+              <span className="flex items-center justify-center">
+                {(mobileIconByPath[item.to] as ReactNode) ?? <NavIconFile />}
               </span>
-              <span className="mt-1">
+              <span className={`mt-0.5 ${visibleMobileItems.length >= 4 ? 'text-[10px]' : 'text-xs'}`}>
                 {mobileLabelByPath[item.to] ?? item.label}
               </span>
             </NavLink>

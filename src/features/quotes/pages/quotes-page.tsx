@@ -277,7 +277,7 @@ const QuotesContent = () => {
                   {formatQuoteDate(quote.createdAt)}
                 </p>
                 <h3 className="mt-1 text-lg font-black leading-tight text-slate-950">
-                  {quote.serviceRequestId}
+                  {quote.serviceRequestTitle}
                 </h3>
               </div>
               <span

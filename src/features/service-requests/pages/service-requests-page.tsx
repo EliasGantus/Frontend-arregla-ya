@@ -1,5 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useParams } from 'react-router-dom';
 
@@ -7,6 +8,7 @@ import { useAuth } from '@/features/auth/context/auth-context';
 import { categoriesService } from '@/features/service-requests/services/categories-service';
 import { serviceRequestsService } from '@/features/service-requests/services/service-requests-service';
 import { ApiError } from '@/shared/api/api-error';
+import { env } from '@/shared/config/env';
 import type { ServiceRequest, ServiceRequestStatus } from '@/shared/types/api';
 import {
   serviceRequestSchema,
@@ -29,6 +31,7 @@ const statusCopy: Record<ServiceRequestStatus, string> = {
   open: 'Abierta',
   quoted: 'Cotizada',
   assigned: 'Asignada',
+  completed: 'Completada',
   cancelled: 'Cancelada',
 };
 
@@ -37,6 +40,7 @@ const statusTone: Record<ServiceRequestStatus, string> = {
   open: 'bg-accent-50 text-accent-700',
   quoted: 'bg-brand-50 text-brand-700',
   assigned: 'bg-emerald-50 text-emerald-700',
+  completed: 'bg-green-100 text-green-800',
   cancelled: 'bg-red-50 text-red-700',
 };
 
@@ -63,11 +67,41 @@ const requestProgress: Record<ServiceRequestStatus, string> = {
   open: 'Esperando cotizaciones',
   quoted: 'Cotizaciones recibidas',
   assigned: 'Profesional asignado',
+  completed: 'Trabajo completado',
   cancelled: 'Solicitud cancelada',
 };
 
 const ServiceRequestsContent = () => {
-  const { user } = useAuth();
+  const { user, accessToken } = useAuth();
+  const [uploadedPhotos, setUploadedPhotos] = useState<string[]>([]);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
+  const handlePhotoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file || uploadedPhotos.length >= 4) return;
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      setUploadError(null);
+      const res = await fetch(`${env.apiUrl}/uploads`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${accessToken ?? ''}` },
+        body: formData,
+      });
+      if (!res.ok) throw new Error('Error al subir imagen.');
+      const data = (await res.json()) as { url: string };
+      setUploadedPhotos((prev) => [...prev, `${env.apiUrl}${data.url}`]);
+    } catch {
+      setUploadError('No se pudo subir la imagen. Intentá de nuevo.');
+    }
+  };
+
+  const removePhoto = (index: number) => {
+    setUploadedPhotos((prev) => prev.filter((_, i) => i !== index));
+  };
   const queryClient = useQueryClient();
   const query = useQuery({
     queryKey: ['service-requests'],
@@ -86,7 +120,6 @@ const ServiceRequestsContent = () => {
     resolver: zodResolver(serviceRequestSchema),
     defaultValues: {
       title: '',
-      description: '',
       categoryId: '',
       city: user?.city ?? '',
       zone: user?.zone ?? '',
@@ -99,12 +132,12 @@ const ServiceRequestsContent = () => {
     onSuccess: async () => {
       reset({
         title: '',
-        description: '',
         categoryId: '',
         city: user?.city ?? '',
         zone: user?.zone ?? '',
         budget: '',
       });
+      setUploadedPhotos([]);
       await queryClient.invalidateQueries({ queryKey: ['service-requests'] });
     },
   });
@@ -158,7 +191,15 @@ const ServiceRequestsContent = () => {
           'Cuando aparezcan pedidos abiertos para tu zona u oficio, los vas a ver aca.',
       };
   const submitRequest = (values: ServiceRequestFormValues) => {
-    mutation.mutate(values);
+    mutation.mutate({
+      title: values.title,
+      description: values.title,
+      categoryId: values.categoryId,
+      city: values.city,
+      zone: values.zone,
+      budget: values.budget,
+      photos: uploadedPhotos,
+    });
   };
 
   return (
@@ -233,22 +274,12 @@ const ServiceRequestsContent = () => {
           >
             <label className="space-y-2 md:col-span-2">
               <span className="text-sm font-semibold text-slate-700">
-                Titulo
+                Describe tu problema
               </span>
               <Input
                 error={errors.title?.message}
-                placeholder="Ej: Arreglo de canilla"
+                placeholder="Ej: Instalación de aire acondicionado en el living"
                 {...register('title')}
-              />
-            </label>
-            <label className="space-y-2 md:col-span-2">
-              <span className="text-sm font-semibold text-slate-700">
-                Descripcion
-              </span>
-              <Textarea
-                error={errors.description?.message}
-                placeholder="Conta que pasa, donde esta el problema y cualquier detalle util."
-                {...register('description')}
               />
             </label>
             <label className="space-y-2">
@@ -277,16 +308,59 @@ const ServiceRequestsContent = () => {
                 {...register('budget')}
               />
             </label>
-            <label className="space-y-2">
+            <div className="grid grid-cols-2 gap-3 md:col-span-2">
+              <label className="space-y-2">
+                <span className="text-sm font-semibold text-slate-700">
+                  Ciudad
+                </span>
+                <Input error={errors.city?.message} {...register('city')} />
+              </label>
+              <label className="space-y-2">
+                <span className="text-sm font-semibold text-slate-700">Zona</span>
+                <Input error={errors.zone?.message} {...register('zone')} />
+              </label>
+            </div>
+            <div className="space-y-2 md:col-span-2">
               <span className="text-sm font-semibold text-slate-700">
-                Ciudad
+                Agregar imágenes del problema
               </span>
-              <Input error={errors.city?.message} {...register('city')} />
-            </label>
-            <label className="space-y-2">
-              <span className="text-sm font-semibold text-slate-700">Zona</span>
-              <Input error={errors.zone?.message} {...register('zone')} />
-            </label>
+              <div className="flex flex-wrap gap-2">
+                {uploadedPhotos.map((url, i) => (
+                  <div
+                    key={url}
+                    className="relative h-16 w-16 overflow-hidden rounded-2xl border border-slate-200"
+                  >
+                    <img
+                      alt={`Foto ${i + 1}`}
+                      className="h-full w-full object-cover"
+                      src={url}
+                    />
+                    <button
+                      className="absolute right-0 top-0 flex h-5 w-5 items-center justify-center rounded-bl bg-red-500 text-xs font-bold text-white"
+                      type="button"
+                      onClick={() => removePhoto(i)}
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+                {uploadedPhotos.length < 4 ? (
+                  <label className="flex h-16 w-16 cursor-pointer items-center justify-center rounded-2xl border-2 border-dashed border-slate-300 hover:border-accent-400">
+                    <span className="text-2xl leading-none text-slate-400">+</span>
+                    <input
+                      accept="image/*"
+                      className="hidden"
+                      type="file"
+                      onChange={(e) => void handlePhotoUpload(e)}
+                    />
+                  </label>
+                ) : null}
+              </div>
+              {uploadError ? (
+                <p className="text-xs text-red-600">{uploadError}</p>
+              ) : null}
+            </div>
+
             <div className="md:col-span-2">
               <Button
                 className="w-full sm:w-auto"
