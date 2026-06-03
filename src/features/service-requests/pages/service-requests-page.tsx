@@ -9,7 +9,11 @@ import { categoriesService } from '@/features/service-requests/services/categori
 import { serviceRequestsService } from '@/features/service-requests/services/service-requests-service';
 import { ApiError } from '@/shared/api/api-error';
 import { env } from '@/shared/config/env';
-import type { ServiceRequest, ServiceRequestStatus } from '@/shared/types/api';
+import type {
+  CreateServiceRequestInput,
+  ServiceRequest,
+  ServiceRequestStatus,
+} from '@/shared/types/api';
 import {
   serviceRequestSchema,
   type ServiceRequestFormValues,
@@ -20,7 +24,6 @@ import { Card } from '@/shared/ui/card';
 import { Input } from '@/shared/ui/input';
 import { Select } from '@/shared/ui/select';
 import { StatusPanel } from '@/shared/ui/status-panel';
-import { Textarea } from '@/shared/ui/textarea';
 
 export const ServiceRequestsPage = () => <ServiceRequestsContent />;
 
@@ -127,7 +130,7 @@ const ServiceRequestsContent = () => {
     },
   });
   const mutation = useMutation({
-    mutationFn: (values: ServiceRequestFormValues) =>
+    mutationFn: (values: CreateServiceRequestInput) =>
       serviceRequestsService.create(values),
     onSuccess: async () => {
       reset({

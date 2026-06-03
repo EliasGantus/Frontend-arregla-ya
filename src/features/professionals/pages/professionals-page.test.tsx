@@ -136,6 +136,7 @@ describe('ProfessionalsPage', () => {
         category: { id: 'cat-plom', name: 'Plomeria', slug: 'plomeria' },
         city: 'Buenos Aires',
         zone: 'Palermo',
+        photos: [],
         createdAt: '2026-05-28T12:00:00.000Z',
       },
     ]);
