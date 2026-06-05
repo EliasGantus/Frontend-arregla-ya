@@ -39,6 +39,14 @@ const methodCopy: Record<PaymentFormValues['method'], string> = {
   mercado_pago_card: 'Tarjeta via MercadoPago',
 };
 
+const paymentStatusTone: Record<Payment['status'], string> = {
+  pending: 'bg-accent-50 text-accent-700',
+  approved: 'bg-emerald-50 text-emerald-700',
+  rejected: 'bg-red-50 text-red-700',
+  cancelled: 'bg-slate-100 text-slate-600',
+  refunded: 'bg-brand-50 text-brand-700',
+};
+
 export const PaymentsPage = () => {
   const location = useLocation();
   const bookingFromState = (location.state as { booking?: Booking } | null)
@@ -113,17 +121,47 @@ export const PaymentsPage = () => {
   const submitPayment = (values: PaymentFormValues) => {
     createPaymentMutation.mutate({ bookingId: values.bookingId, values });
   };
+  const payments = paymentsQuery.data ?? [];
+  const approvedTotal = payments
+    .filter((item) => item.status === 'approved')
+    .reduce((total, item) => total + item.amountCents, 0);
+  const paymentStats = [
+    { label: 'Servicios', value: payableBookings.length },
+    { label: 'Pagos', value: payments.length },
+    { label: 'Aprobado', value: formatMoney(approvedTotal) },
+  ];
 
   return (
-    <div className="space-y-6">
-      <StatusPanel
-        eyebrow="Pagos"
-        title="Pago seguro con MercadoPago"
-        description="Revisa el servicio completado, selecciona un metodo de pago y genera un comprobante de la transaccion."
-      />
+    <div className="space-y-4 md:space-y-6">
+      <div className="hidden md:block">
+        <StatusPanel
+          eyebrow="Pagos"
+          title="Pago seguro con MercadoPago"
+          description="Revisa el servicio completado, selecciona un metodo de pago y genera un comprobante de la transaccion."
+        />
+      </div>
+
+      <Card className="rounded-[28px] !bg-ink p-5 text-white shadow-lg shadow-slate-300/70 md:hidden">
+        <div className="space-y-4">
+          <div className="min-w-0">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-accent-200">
+              Pagos
+            </p>
+            <h1 className="mt-2 text-2xl font-black leading-tight">
+              Pago seguro con MercadoPago
+            </h1>
+            <p className="mt-2 text-sm leading-6 text-slate-200">
+              Selecciona el servicio, el monto y genera tu comprobante.
+            </p>
+          </div>
+          <div className="w-fit rounded-full bg-white px-3 py-1 text-xs font-black uppercase tracking-[0.14em] text-ink">
+            {payableBookings.length} servicios
+          </div>
+        </div>
+      </Card>
 
       {errorMessage ? (
-        <Card className="border border-red-200 bg-red-50">
+        <Card className="rounded-[28px] border border-red-200 bg-red-50 md:rounded-3xl">
           <p className="text-sm font-semibold text-red-800">Pago rechazado</p>
           <p className="mt-2 text-sm text-red-700">{errorMessage}</p>
         </Card>
@@ -131,7 +169,7 @@ export const PaymentsPage = () => {
 
       {bookingsQuery.error instanceof ApiError ||
       paymentsQuery.error instanceof ApiError ? (
-        <Card className="border border-amber-200 bg-amber-50">
+        <Card className="rounded-[28px] border border-amber-200 bg-amber-50 md:rounded-3xl">
           <p className="text-sm font-semibold text-amber-800">
             No pudimos cargar pagos
           </p>
@@ -145,7 +183,7 @@ export const PaymentsPage = () => {
       ) : null}
 
       {payment ? (
-        <Card className="border border-emerald-200 bg-emerald-50">
+        <Card className="rounded-[28px] border border-emerald-200 bg-emerald-50 md:rounded-3xl">
           <p className="text-sm font-semibold text-emerald-800">
             {payment.status === 'approved'
               ? 'Pago procesado exitosamente. Recibiras el comprobante por email.'
@@ -190,8 +228,52 @@ export const PaymentsPage = () => {
         </Card>
       ) : null}
 
+      <section className="rounded-[28px] bg-white p-4 shadow-lg shadow-slate-200/70 md:rounded-3xl md:p-6">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400 md:hidden">
+              Resumen
+            </p>
+            <h2 className="text-xl font-black text-slate-950 md:text-xl">
+              Estado de pagos
+            </h2>
+            <p className="mt-1 text-sm text-slate-500">
+              Revisa servicios pagables, comprobantes y total aprobado.
+            </p>
+          </div>
+          <Badge>{payments.length} registros</Badge>
+        </div>
+
+        <div className="mt-4 grid grid-cols-3 gap-2">
+          {paymentStats.map((stat) => (
+            <div
+              className="rounded-2xl bg-slate-50 px-2 py-3 text-center"
+              key={stat.label}
+            >
+              <p className="break-words text-base font-black text-slate-950">
+                {stat.value}
+              </p>
+              <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-400">
+                {stat.label}
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
+
       <div className="grid gap-4 lg:grid-cols-[1fr_0.8fr]">
-        <Card>
+        <Card className="rounded-[28px] bg-white p-4 shadow-lg shadow-slate-200/70 md:rounded-3xl md:p-6">
+          <div className="mb-5">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400 md:hidden">
+              Nuevo pago
+            </p>
+            <h2 className="text-xl font-black text-slate-950">
+              Completa el pago
+            </h2>
+            <p className="mt-1 text-sm text-slate-500">
+              Selecciona un servicio confirmado o completado y define el monto.
+            </p>
+          </div>
           <form
             className="grid gap-4"
             onSubmit={(event) => void handleSubmit(submitPayment)(event)}
@@ -250,14 +332,14 @@ export const PaymentsPage = () => {
           </form>
         </Card>
 
-        <Card>
-          <p className="text-sm font-semibold uppercase text-slate-400">
+        <Card className="rounded-[28px] bg-white p-4 shadow-lg shadow-slate-200/70 md:rounded-3xl md:p-6">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
             Resumen del servicio
           </p>
           {selectedBooking ? (
             <div className="mt-4 space-y-4">
               <div>
-                <h3 className="text-xl font-bold text-slate-950">
+                <h3 className="text-xl font-black text-slate-950">
                   {selectedBooking.serviceRequestTitle}
                 </h3>
                 <p className="mt-1 text-sm text-slate-600">
@@ -266,7 +348,7 @@ export const PaymentsPage = () => {
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="rounded-2xl bg-slate-50 px-4 py-3">
-                  <p className="text-xs font-semibold uppercase text-slate-400">
+                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
                     Monto
                   </p>
                   <p className="mt-1 text-lg font-black text-slate-950">
@@ -276,7 +358,7 @@ export const PaymentsPage = () => {
                   </p>
                 </div>
                 <div className="rounded-2xl bg-slate-50 px-4 py-3">
-                  <p className="text-xs font-semibold uppercase text-slate-400">
+                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
                     Metodo
                   </p>
                   <p className="mt-1 text-sm font-bold text-slate-950">
@@ -295,29 +377,55 @@ export const PaymentsPage = () => {
       </div>
 
       <div className="grid gap-4">
-        <h3 className="text-lg font-bold text-slate-950">Pagos recientes</h3>
-        {!(paymentsQuery.data ?? []).length && !paymentsQuery.isLoading ? (
-          <Card>
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400 md:hidden">
+              Actividad
+            </p>
+            <h3 className="text-lg font-black text-slate-950">
+              Pagos recientes
+            </h3>
+          </div>
+          <Badge>{payments.length} total</Badge>
+        </div>
+        {!payments.length && !paymentsQuery.isLoading ? (
+          <Card className="rounded-[28px] bg-white p-5 text-center shadow-lg shadow-slate-200/70 md:rounded-3xl">
             <p className="text-sm text-slate-600">
               Todavia no hay pagos registrados.
             </p>
           </Card>
         ) : null}
-        {(paymentsQuery.data ?? []).map((item) => (
+        {payments.map((item) => (
           <Card
             key={item.id}
-            className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
+            className="rounded-[28px] bg-white p-4 shadow-lg shadow-slate-200/70 md:rounded-3xl md:p-6"
           >
-            <div>
-              <p className="font-semibold text-slate-900">
-                {item.serviceRequestTitle}
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
+                  {item.receiptNumber ?? item.id}
+                </p>
+                <h4 className="mt-1 text-lg font-black leading-tight text-slate-950">
+                  {item.serviceRequestTitle}
+                </h4>
+                <p className="mt-1 text-sm text-slate-600">
+                  {item.professionalName}
+                </p>
+              </div>
+              <span
+                className={`w-fit shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${paymentStatusTone[item.status]}`}
+              >
+                {item.status}
+              </span>
+            </div>
+            <div className="mt-4 rounded-2xl bg-slate-50 px-4 py-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
+                Monto
               </p>
-              <p className="mt-1 text-sm text-slate-600">
-                {item.professionalName} -{' '}
+              <p className="mt-1 text-xl font-black text-slate-950">
                 {formatMoney(item.amountCents, item.currency)}
               </p>
             </div>
-            <Badge>{item.status}</Badge>
           </Card>
         ))}
       </div>
