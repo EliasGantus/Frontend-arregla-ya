@@ -792,6 +792,7 @@ export const ProfessionalBookingPage = () => {
   const [createdBooking, setCreatedBooking] = useState<Booking | null>(null);
   const professional = professionalFromState ?? profileQuery.data;
   const serviceRequests = serviceRequestsQuery.data ?? [];
+  const availableRequests = serviceRequests.length;
 
   const submitBooking = (values: BookingFormValues) => {
     if (!professional) {
@@ -807,32 +808,68 @@ export const ProfessionalBookingPage = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <StatusPanel
-        eyebrow="Reserva de turno"
-        title={
-          professional
-            ? `Reserva con ${professional.fullName}`
-            : 'Reserva con profesional'
-        }
-        description="Inicio del flujo para coordinar fecha, horario y detalle del trabajo antes de confirmar la solicitud."
-        actions={
-          <Button
-            className="w-full sm:w-auto"
-            variant="ghost"
-            onClick={() => {
-              void navigate(`/app/profesionales/${professionalIdValue}`, {
-                state: professional ? { professional } : undefined,
-              });
-            }}
-          >
-            Volver al perfil
-          </Button>
-        }
-      />
+    <div className="space-y-4 md:space-y-6">
+      <div className="hidden md:block">
+        <StatusPanel
+          eyebrow="Reserva de turno"
+          title={
+            professional
+              ? `Reserva con ${professional.fullName}`
+              : 'Reserva con profesional'
+          }
+          description="Inicio del flujo para coordinar fecha, horario y detalle del trabajo antes de confirmar la solicitud."
+          actions={
+            <Button
+              className="w-full sm:w-auto"
+              variant="ghost"
+              onClick={() => {
+                void navigate(`/app/profesionales/${professionalIdValue}`, {
+                  state: professional ? { professional } : undefined,
+                });
+              }}
+            >
+              Volver al perfil
+            </Button>
+          }
+        />
+      </div>
+
+      <Button
+        className="min-h-10 rounded-full bg-white px-4 py-2 text-slate-600 shadow-sm shadow-slate-200/70 md:hidden"
+        variant="ghost"
+        onClick={() => {
+          void navigate(`/app/profesionales/${professionalIdValue}`, {
+            state: professional ? { professional } : undefined,
+          });
+        }}
+      >
+        Volver
+      </Button>
+
+      <Card className="rounded-[28px] !bg-ink p-5 text-white shadow-lg shadow-slate-300/70 md:hidden">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-accent-200">
+              Reserva de turno
+            </p>
+            <h1 className="mt-2 text-2xl font-black leading-tight">
+              {professional
+                ? `Coordina con ${professional.fullName}`
+                : 'Reserva con profesional'}
+            </h1>
+            <p className="mt-2 text-sm leading-6 text-slate-200">
+              Elige solicitud, fecha y horario para dejar el servicio pendiente
+              de confirmacion.
+            </p>
+          </div>
+          <div className="shrink-0 rounded-full bg-white px-3 py-1 text-xs font-black uppercase tracking-[0.14em] text-ink">
+            Paso 2
+          </div>
+        </div>
+      </Card>
 
       {profileQuery.error instanceof ApiError ? (
-        <Card className="border border-amber-200 bg-amber-50">
+        <Card className="rounded-[28px] border border-amber-200 bg-amber-50 md:rounded-3xl">
           <p className="text-sm font-semibold text-amber-800">
             No pudimos cargar el profesional
           </p>
@@ -844,7 +881,7 @@ export const ProfessionalBookingPage = () => {
 
       {serviceRequestsQuery.error instanceof ApiError ||
       createBookingMutation.error instanceof ApiError ? (
-        <Card className="border border-amber-200 bg-amber-50">
+        <Card className="rounded-[28px] border border-amber-200 bg-amber-50 md:rounded-3xl">
           <p className="text-sm font-semibold text-amber-800">
             No pudimos completar la reserva
           </p>
@@ -858,7 +895,7 @@ export const ProfessionalBookingPage = () => {
       ) : null}
 
       {createdBooking ? (
-        <Card className="border border-emerald-200 bg-emerald-50">
+        <Card className="rounded-[28px] border border-emerald-200 bg-emerald-50 md:rounded-3xl">
           <p className="text-sm font-semibold text-emerald-800">
             Reserva creada con estado Pendiente. Recibiras una notificacion de
             confirmacion.
@@ -872,7 +909,7 @@ export const ProfessionalBookingPage = () => {
             .
           </p>
           <Button
-            className="mt-4"
+            className="mt-4 w-full sm:w-auto"
             onClick={() => {
               void navigate('/app/reservas');
             }}
@@ -884,11 +921,14 @@ export const ProfessionalBookingPage = () => {
       ) : null}
 
       {!professional && !profileQuery.isLoading ? (
-        <Card>
-          <p className="text-sm font-semibold text-slate-800">
+        <Card className="rounded-[28px] bg-white p-5 text-center shadow-lg shadow-slate-200/70 md:rounded-3xl">
+          <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-accent-50 text-xl font-black text-accent-600">
+            0
+          </div>
+          <h1 className="mt-4 text-xl font-black text-slate-950">
             No encontramos el profesional para reservar.
-          </p>
-          <p className="mt-2 text-sm text-slate-600">
+          </h1>
+          <p className="mx-auto mt-2 max-w-sm text-sm text-slate-600">
             Vuelve al buscador y selecciona un profesional disponible.
           </p>
         </Card>
@@ -896,8 +936,8 @@ export const ProfessionalBookingPage = () => {
 
       {professional ? (
         <div className="grid gap-4 lg:grid-cols-[0.8fr_1.2fr]">
-          <Card>
-            <p className="text-sm font-semibold uppercase text-slate-400">
+          <Card className="rounded-[28px] bg-white p-4 shadow-lg shadow-slate-200/70 md:rounded-3xl md:p-6">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
               Profesional seleccionado
             </p>
             <h3 className="mt-2 text-2xl font-black text-slate-950">
@@ -910,14 +950,50 @@ export const ProfessionalBookingPage = () => {
               {professional.city ?? 'Ciudad sin cargar'} -{' '}
               {professional.zone ?? 'Zona sin cargar'}
             </p>
-            <div className="mt-4">
-              <Badge>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <span
+                className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                  professional.available
+                    ? 'bg-emerald-50 text-emerald-700'
+                    : 'bg-slate-100 text-slate-600'
+                }`}
+              >
                 {professional.available ? 'Disponible' : 'Con agenda'}
-              </Badge>
+              </span>
+              <Badge>{availableRequests} solicitudes</Badge>
+            </div>
+            <div className="mt-5 grid grid-cols-2 gap-3">
+              <div className="rounded-2xl bg-slate-50 px-4 py-3">
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
+                  Puntaje
+                </p>
+                <p className="mt-1 text-2xl font-black text-slate-950">
+                  {formatRating(professional.ratingAverage)}
+                </p>
+              </div>
+              <div className="rounded-2xl bg-slate-50 px-4 py-3">
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
+                  Resenas
+                </p>
+                <p className="mt-1 text-2xl font-black text-slate-950">
+                  {professional.ratingCount}
+                </p>
+              </div>
             </div>
           </Card>
 
-          <Card>
+          <Card className="rounded-[28px] bg-white p-4 shadow-lg shadow-slate-200/70 md:rounded-3xl md:p-6">
+            <div className="mb-5">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400 md:hidden">
+                Datos del turno
+              </p>
+              <h2 className="text-xl font-black text-slate-950">
+                Completa la reserva
+              </h2>
+              <p className="mt-1 text-sm text-slate-500">
+                Asocia una solicitud abierta y propone una fecha tentativa.
+              </p>
+            </div>
             <form
               className="grid gap-4 md:grid-cols-2"
               onSubmit={(event) => void handleSubmit(submitBooking)(event)}
