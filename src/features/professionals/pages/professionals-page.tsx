@@ -464,51 +464,89 @@ export const ProfessionalProfilePage = () => {
   });
   const professional = professionalFromState ?? profileQuery.data;
   const workPhotos = professional ? getWorkPhotos(professional) : [];
+  const reviews = reviewsQuery.data ?? [];
 
   return (
-    <div className="space-y-6">
-      <StatusPanel
-        eyebrow="Perfil profesional"
-        title={
-          professional
-            ? `Perfil de ${professional.fullName}`
-            : 'Perfil profesional'
-        }
-        description="Informacion de contacto, especialidades, disponibilidad y resenas del profesional seleccionado."
-        actions={
-          <>
-            <Button
-              className="w-full sm:w-auto"
-              variant="ghost"
-              onClick={() => {
-                void navigate('/app/profesionales');
-              }}
-            >
-              Volver al buscador
-            </Button>
-            {professional ? (
+    <div className="space-y-4 md:space-y-6">
+      <div className="hidden md:block">
+        <StatusPanel
+          eyebrow="Perfil profesional"
+          title={
+            professional
+              ? `Perfil de ${professional.fullName}`
+              : 'Perfil profesional'
+          }
+          description="Informacion de contacto, especialidades, disponibilidad y resenas del profesional seleccionado."
+          actions={
+            <>
               <Button
                 className="w-full sm:w-auto"
-                variant="secondary"
+                variant="ghost"
                 onClick={() => {
-                  void navigate(
-                    `/app/profesionales/${professional.id}/reservar`,
-                    {
-                      state: { professional },
-                    },
-                  );
+                  void navigate('/app/profesionales');
                 }}
               >
-                Reservar
+                Volver al buscador
               </Button>
-            ) : null}
-          </>
-        }
-      />
+              {professional ? (
+                <Button
+                  className="w-full sm:w-auto"
+                  variant="secondary"
+                  onClick={() => {
+                    void navigate(
+                      `/app/profesionales/${professional.id}/reservar`,
+                      {
+                        state: { professional },
+                      },
+                    );
+                  }}
+                >
+                  Reservar
+                </Button>
+              ) : null}
+            </>
+          }
+        />
+      </div>
+
+      <Button
+        className="min-h-10 rounded-full bg-white px-4 py-2 text-slate-600 shadow-sm shadow-slate-200/70 md:hidden"
+        variant="ghost"
+        onClick={() => {
+          void navigate('/app/profesionales');
+        }}
+      >
+        Volver
+      </Button>
+
+      {professional ? (
+        <Card className="rounded-[28px] !bg-ink p-5 text-white shadow-lg shadow-slate-300/70 md:hidden">
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-accent-200">
+                Perfil profesional
+              </p>
+              <h1 className="mt-2 text-2xl font-black leading-tight">
+                {professional.fullName}
+              </h1>
+              <p className="mt-2 text-sm font-semibold text-accent-100">
+                {getPrimarySpecialty(professional)}
+              </p>
+              <p className="mt-2 text-sm leading-6 text-slate-200">
+                {professional.city ?? 'Ciudad sin cargar'} /{' '}
+                {professional.zone ?? 'Zona sin cargar'}
+              </p>
+            </div>
+            <div className="shrink-0 rounded-full bg-white px-3 py-1 text-xs font-black uppercase tracking-[0.14em] text-ink">
+              {professional.available ? 'Disponible' : 'Agenda'}
+            </div>
+          </div>
+        </Card>
+      ) : null}
 
       {profileQuery.error instanceof ApiError ||
       reviewsQuery.error instanceof ApiError ? (
-        <Card className="border border-amber-200 bg-amber-50">
+        <Card className="rounded-[28px] border border-amber-200 bg-amber-50 md:rounded-3xl">
           <p className="text-sm font-semibold text-amber-800">
             No pudimos cargar todo el perfil
           </p>
@@ -522,11 +560,14 @@ export const ProfessionalProfilePage = () => {
       ) : null}
 
       {!professional && !profileQuery.isLoading ? (
-        <Card>
-          <p className="text-sm font-semibold text-slate-800">
+        <Card className="rounded-[28px] bg-white p-5 text-center shadow-lg shadow-slate-200/70 md:rounded-3xl">
+          <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-accent-50 text-xl font-black text-accent-600">
+            0
+          </div>
+          <h1 className="mt-4 text-xl font-black text-slate-950">
             No encontramos el profesional solicitado.
-          </p>
-          <p className="mt-2 text-sm text-slate-600">
+          </h1>
+          <p className="mx-auto mt-2 max-w-sm text-sm text-slate-600">
             Vuelve al buscador y abre el perfil desde un resultado vigente.
           </p>
         </Card>
@@ -535,10 +576,13 @@ export const ProfessionalProfilePage = () => {
       {professional ? (
         <>
           <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
-            <Card>
+            <Card className="rounded-[28px] bg-white p-4 shadow-lg shadow-slate-200/70 md:rounded-3xl md:p-6">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div>
-                  <h3 className="text-2xl font-black text-slate-950">
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400 md:hidden">
+                    Contacto
+                  </p>
+                  <h3 className="mt-1 text-2xl font-black text-slate-950">
                     {professional.fullName}
                   </h3>
                   <p className="mt-2 text-sm font-semibold text-brand-700">
@@ -552,9 +596,15 @@ export const ProfessionalProfilePage = () => {
                     {professional.zone ?? 'Zona sin cargar'}
                   </p>
                 </div>
-                <Badge>
+                <span
+                  className={`w-fit shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${
+                    professional.available
+                      ? 'bg-emerald-50 text-emerald-700'
+                      : 'bg-slate-100 text-slate-600'
+                  }`}
+                >
                   {professional.available ? 'Disponible' : 'Con agenda'}
-                </Badge>
+                </span>
               </div>
 
               <div className="mt-6 flex flex-wrap gap-2">
@@ -567,13 +617,38 @@ export const ProfessionalProfilePage = () => {
                   </span>
                 ))}
               </div>
+              <Button
+                aria-label={`Reservar turno con ${professional.fullName}`}
+                className="mt-6 w-full md:hidden"
+                variant="secondary"
+                onClick={() => {
+                  void navigate(
+                    `/app/profesionales/${professional.id}/reservar`,
+                    {
+                      state: { professional },
+                    },
+                  );
+                }}
+              >
+                Reservar
+              </Button>
             </Card>
 
-            <Card>
-              <p className="text-sm font-semibold text-slate-500">Reputacion</p>
-              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <Card className="rounded-[28px] bg-white p-4 shadow-lg shadow-slate-200/70 md:rounded-3xl md:p-6">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
+                    Reputacion
+                  </p>
+                  <h2 className="mt-1 text-xl font-black text-slate-950">
+                    Confianza del perfil
+                  </h2>
+                </div>
+                <Badge>{reviews.length} resenas</Badge>
+              </div>
+              <div className="mt-4 grid grid-cols-2 gap-3">
                 <div className="rounded-2xl bg-slate-50 px-4 py-3">
-                  <p className="text-xs font-semibold uppercase text-slate-400">
+                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
                     Puntaje
                   </p>
                   <p className="mt-1 text-3xl font-black text-slate-950">
@@ -581,7 +656,7 @@ export const ProfessionalProfilePage = () => {
                   </p>
                 </div>
                 <div className="rounded-2xl bg-slate-50 px-4 py-3">
-                  <p className="text-xs font-semibold uppercase text-slate-400">
+                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
                     Resenas
                   </p>
                   <p className="mt-1 text-3xl font-black text-slate-950">
@@ -592,27 +667,27 @@ export const ProfessionalProfilePage = () => {
             </Card>
           </div>
 
-          <Card>
+          <Card className="rounded-[28px] bg-white p-4 shadow-lg shadow-slate-200/70 md:rounded-3xl md:p-6">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <p className="text-sm font-semibold uppercase text-slate-400">
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
                   Trabajos realizados
                 </p>
-                <h3 className="mt-1 text-xl font-bold text-slate-950">
+                <h3 className="mt-1 text-xl font-black text-slate-950">
                   Fotos de servicios recientes
                 </h3>
               </div>
               <Badge>{workPhotos.length} fotos</Badge>
             </div>
-            <div className="mt-5 grid gap-4 md:grid-cols-3">
+            <div className="mt-5 grid gap-3 md:grid-cols-3 md:gap-4">
               {workPhotos.map((photo) => (
                 <figure
-                  className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50"
+                  className="overflow-hidden rounded-[22px] border border-slate-200 bg-slate-50 md:rounded-2xl"
                   key={photo.src}
                 >
                   <img
                     alt={photo.alt}
-                    className="h-44 w-full object-cover"
+                    className="h-40 w-full object-cover md:h-44"
                     src={photo.src}
                   />
                   <figcaption className="px-4 py-3 text-sm font-semibold text-slate-700">
@@ -626,16 +701,29 @@ export const ProfessionalProfilePage = () => {
       ) : null}
 
       <div className="grid gap-4">
-        <h3 className="text-lg font-bold text-slate-950">Resenas recientes</h3>
-        {!reviewsQuery.isLoading && !(reviewsQuery.data ?? []).length ? (
-          <Card>
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400 md:hidden">
+              Opiniones
+            </p>
+            <h3 className="text-lg font-black text-slate-950">
+              Resenas recientes
+            </h3>
+          </div>
+          <Badge>{reviews.length} total</Badge>
+        </div>
+        {!reviewsQuery.isLoading && !reviews.length ? (
+          <Card className="rounded-[28px] bg-white p-5 text-center shadow-lg shadow-slate-200/70 md:rounded-3xl">
             <p className="text-sm text-slate-600">
               Este profesional todavia no tiene resenas publicadas.
             </p>
           </Card>
         ) : null}
-        {(reviewsQuery.data ?? []).map((review) => (
-          <Card key={review.id}>
+        {reviews.map((review) => (
+          <Card
+            className="rounded-[28px] bg-white p-4 shadow-lg shadow-slate-200/70 md:rounded-3xl md:p-6"
+            key={review.id}
+          >
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="font-semibold text-slate-900">
