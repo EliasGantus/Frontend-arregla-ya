@@ -169,6 +169,18 @@ const ProfessionalsSearchContent = () => {
     [professionalsQuery.data],
   );
   const hasSearched = Boolean(filters);
+  const availableProfessionals = professionals.filter(
+    (professional) => professional.available,
+  ).length;
+  const reviewsCount = professionals.reduce(
+    (total, professional) => total + professional.ratingCount,
+    0,
+  );
+  const professionalStats = [
+    { label: 'Resultados', value: professionals.length },
+    { label: 'Disponibles', value: availableProfessionals },
+    { label: 'Resenas', value: reviewsCount },
+  ];
 
   const submitSearch = (values: ProfessionalSearchFormValues) => {
     setFilters({
@@ -179,16 +191,37 @@ const ProfessionalsSearchContent = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <StatusPanel
-        eyebrow="Profesionales"
-        title="Busqueda por especialidad, zona y disponibilidad"
-        description="Filtra profesionales activos, compara puntaje y resenas, y entra al perfil para validar si encaja con tu necesidad."
-      />
+    <div className="space-y-4 md:space-y-6">
+      <div className="hidden md:block">
+        <StatusPanel
+          eyebrow="Profesionales"
+          title="Busqueda por especialidad, zona y disponibilidad"
+          description="Filtra profesionales activos, compara puntaje y resenas, y entra al perfil para validar si encaja con tu necesidad."
+        />
+      </div>
+
+      <Card className="rounded-[28px] !bg-ink p-5 text-white shadow-lg shadow-slate-300/70 md:hidden">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-accent-200">
+              Profesionales
+            </p>
+            <h1 className="mt-2 text-2xl font-black leading-tight">
+              Encontra ayuda confiable
+            </h1>
+            <p className="mt-2 text-sm leading-6 text-slate-200">
+              Filtra por oficio, zona y disponibilidad para comparar opciones.
+            </p>
+          </div>
+          <div className="shrink-0 rounded-full bg-white px-3 py-1 text-xs font-black uppercase tracking-[0.14em] text-ink">
+            {hasSearched ? `${professionals.length} total` : 'Buscar'}
+          </div>
+        </div>
+      </Card>
 
       {categoriesQuery.error instanceof ApiError ||
       professionalsQuery.error instanceof ApiError ? (
-        <Card className="border border-amber-200 bg-amber-50">
+        <Card className="rounded-[28px] border border-amber-200 bg-amber-50 md:rounded-3xl">
           <p className="text-sm font-semibold text-amber-800">
             Backend no disponible
           </p>
@@ -201,7 +234,18 @@ const ProfessionalsSearchContent = () => {
         </Card>
       ) : null}
 
-      <Card>
+      <Card className="rounded-[28px] bg-white p-4 shadow-lg shadow-slate-200/70 md:rounded-3xl md:p-6">
+        <div className="mb-5">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400 md:hidden">
+            Filtros
+          </p>
+          <h2 className="text-xl font-black text-slate-950 md:text-xl">
+            Buscar profesionales
+          </h2>
+          <p className="mt-1 text-sm text-slate-500">
+            Ajusta la especialidad y la zona para encontrar perfiles relevantes.
+          </p>
+        </div>
         <form
           className="grid gap-4 lg:grid-cols-[1fr_1fr_auto]"
           onSubmit={(event) => void handleSubmit(submitSearch)(event)}
@@ -254,12 +298,46 @@ const ProfessionalsSearchContent = () => {
         </form>
       </Card>
 
+      <section className="rounded-[28px] bg-white p-4 shadow-lg shadow-slate-200/70 md:rounded-3xl md:p-6">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400 md:hidden">
+              Comparacion
+            </p>
+            <h2 className="text-xl font-black text-slate-950 md:text-xl">
+              Resultados
+            </h2>
+            <p className="mt-1 text-sm text-slate-500">
+              Los perfiles se ordenan por puntaje y cantidad de resenas.
+            </p>
+          </div>
+          <Badge>{hasSearched ? `${professionals.length} encontrados` : 'Sin buscar'}</Badge>
+        </div>
+
+        <div className="mt-4 grid grid-cols-3 gap-2">
+          {professionalStats.map((stat) => (
+            <div
+              className="rounded-2xl bg-slate-50 px-3 py-3 text-center"
+              key={stat.label}
+            >
+              <p className="text-lg font-black text-slate-950">{stat.value}</p>
+              <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-400">
+                {stat.label}
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
+
       {!hasSearched ? (
-        <Card>
-          <p className="text-sm font-semibold text-slate-800">
+        <Card className="rounded-[28px] bg-white p-5 text-center shadow-lg shadow-slate-200/70 md:rounded-3xl">
+          <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-accent-50 text-xl font-black text-accent-600">
+            0
+          </div>
+          <h3 className="mt-4 text-lg font-black text-slate-950">
             Completa los filtros para iniciar la busqueda.
-          </p>
-          <p className="mt-2 text-sm text-slate-600">
+          </h3>
+          <p className="mx-auto mt-2 max-w-sm text-sm text-slate-600">
             Los resultados se ordenan por puntaje y cantidad de resenas para que
             priorices profesionales mejor calificados.
           </p>
@@ -269,11 +347,14 @@ const ProfessionalsSearchContent = () => {
       {hasSearched &&
       !professionalsQuery.isFetching &&
       !professionals.length ? (
-        <Card>
-          <p className="text-sm font-semibold text-slate-800">
+        <Card className="rounded-[28px] bg-white p-5 text-center shadow-lg shadow-slate-200/70 md:rounded-3xl">
+          <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-accent-50 text-xl font-black text-accent-600">
+            0
+          </div>
+          <h3 className="mt-4 text-lg font-black text-slate-950">
             No encontramos profesionales disponibles para esos filtros.
-          </p>
-          <p className="mt-2 text-sm text-slate-600">
+          </h3>
+          <p className="mx-auto mt-2 max-w-sm text-sm text-slate-600">
             Amplia la zona, cambia la especialidad o quita la disponibilidad
             inmediata para ver mas opciones.
           </p>
@@ -284,11 +365,14 @@ const ProfessionalsSearchContent = () => {
         {professionals.map((professional) => (
           <Card
             key={professional.id}
-            className="flex flex-col justify-between gap-5"
+            className="rounded-[28px] bg-white p-4 shadow-lg shadow-slate-200/70 md:rounded-3xl md:p-6"
           >
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-              <div>
-                <h3 className="text-xl font-bold text-slate-950">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
+                  {getPrimarySpecialty(professional)}
+                </p>
+                <h3 className="mt-1 text-lg font-black leading-tight text-slate-950">
                   {professional.fullName}
                 </h3>
                 <p className="mt-1 text-sm text-slate-500">
@@ -296,12 +380,18 @@ const ProfessionalsSearchContent = () => {
                   {professional.zone ?? 'Zona sin cargar'}
                 </p>
               </div>
-              <Badge>
+              <span
+                className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${
+                  professional.available
+                    ? 'bg-emerald-50 text-emerald-700'
+                    : 'bg-slate-100 text-slate-600'
+                }`}
+              >
                 {professional.available ? 'Disponible' : 'Con agenda'}
-              </Badge>
+              </span>
             </div>
 
-            <div className="flex flex-wrap gap-2">
+            <div className="mt-4 flex flex-wrap gap-2">
               {professional.specialties.map((specialty) => (
                 <span
                   className="rounded-full bg-brand-50 px-3 py-1 text-xs font-semibold text-brand-700"
@@ -312,9 +402,9 @@ const ProfessionalsSearchContent = () => {
               ))}
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="mt-4 grid grid-cols-2 gap-3">
               <div className="rounded-2xl bg-slate-50 px-4 py-3">
-                <p className="text-xs font-semibold uppercase text-slate-400">
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
                   Puntaje
                 </p>
                 <p className="mt-1 text-2xl font-black text-slate-950">
@@ -322,7 +412,7 @@ const ProfessionalsSearchContent = () => {
                 </p>
               </div>
               <div className="rounded-2xl bg-slate-50 px-4 py-3">
-                <p className="text-xs font-semibold uppercase text-slate-400">
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
                   Resenas
                 </p>
                 <p className="mt-1 text-2xl font-black text-slate-950">
@@ -331,7 +421,7 @@ const ProfessionalsSearchContent = () => {
               </div>
             </div>
 
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <p className="break-all text-sm text-slate-600">
                 {professional.email}
               </p>
