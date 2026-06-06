@@ -129,16 +129,60 @@ export const EmergenciesPage = () => {
     );
   };
 
+  const emergencyState = emergency
+    ? 'Creada'
+    : professionalsQuery.isFetching
+      ? 'Buscando'
+      : searched
+        ? 'Lista'
+        : 'Pendiente';
+
   return (
-    <div className="space-y-6">
-      <StatusPanel
-        eyebrow="Emergencias"
-        title="Solicitud urgente de profesional"
-        description="Selecciona el problema, revisa profesionales disponibles ahora y solicita ayuda inmediata o agenda el primer horario posible."
-      />
+    <div className="space-y-5 pb-24 md:space-y-6 md:pb-0">
+      <div className="hidden md:block">
+        <StatusPanel
+          eyebrow="Emergencias"
+          title="Solicitud urgente de profesional"
+          description="Selecciona el problema, revisa profesionales disponibles ahora y solicita ayuda inmediata o agenda el primer horario posible."
+        />
+      </div>
+
+      <section className="overflow-hidden rounded-[2rem] bg-slate-950 p-5 text-white shadow-2xl shadow-slate-300/50 md:hidden">
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-brand-200">
+              Emergencias
+            </p>
+            <h1 className="mt-3 text-3xl font-black leading-none">
+              Ayuda urgente
+            </h1>
+            <p className="mt-3 text-sm leading-6 text-slate-200">
+              Busca profesionales disponibles ahora o agenda el primer horario
+              posible.
+            </p>
+          </div>
+          <Badge className="shrink-0 bg-white/10 text-white">Ahora</Badge>
+        </div>
+        <div className="mt-6 grid grid-cols-2 gap-3">
+          <div className="rounded-3xl border border-white/10 bg-white/10 p-3">
+            <p className="text-2xl font-black leading-none">
+              {professionals.length}
+            </p>
+            <p className="mt-1 text-xs font-semibold uppercase tracking-[0.12em] text-slate-300">
+              Disponibles
+            </p>
+          </div>
+          <div className="rounded-3xl border border-white/10 bg-white/10 p-3">
+            <p className="text-lg font-black leading-none">{emergencyState}</p>
+            <p className="mt-1 text-xs font-semibold uppercase tracking-[0.12em] text-slate-300">
+              Estado
+            </p>
+          </div>
+        </div>
+      </section>
 
       {notice ? (
-        <Card className="border border-emerald-200 bg-emerald-50">
+        <Card className="border border-emerald-200 bg-emerald-50 shadow-emerald-100/70">
           <p className="text-sm font-semibold text-emerald-800">{notice}</p>
           {emergency ? (
             <p className="mt-2 text-sm text-emerald-700">
@@ -152,7 +196,7 @@ export const EmergenciesPage = () => {
       {categoriesQuery.error instanceof ApiError ||
       professionalsQuery.error instanceof ApiError ||
       emergencyMutation.error instanceof ApiError ? (
-        <Card className="border border-amber-200 bg-amber-50">
+        <Card className="border border-amber-200 bg-amber-50 shadow-amber-100/70">
           <p className="text-sm font-semibold text-amber-800">
             No pudimos procesar la emergencia
           </p>
@@ -167,7 +211,19 @@ export const EmergenciesPage = () => {
         </Card>
       ) : null}
 
-      <Card>
+      <Card className="p-4 sm:p-6">
+        <div className="mb-5 md:hidden">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-brand-700">
+            Datos del problema
+          </p>
+          <h2 className="mt-2 text-2xl font-black leading-tight text-slate-950">
+            Contanos que paso
+          </h2>
+          <p className="mt-2 text-sm leading-6 text-slate-600">
+            Completamos la busqueda con tu zona y priorizamos profesionales
+            activos.
+          </p>
+        </div>
         <form
           className="grid gap-4 md:grid-cols-2"
           onSubmit={(event) => void handleSubmit(searchNow)(event)}
@@ -248,32 +304,53 @@ export const EmergenciesPage = () => {
       </Card>
 
       {professionals.length ? (
-        <div className="grid gap-4">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <h3 className="text-xl font-bold text-slate-950">
-              Profesionales disponibles ahora
-            </h3>
-            <Badge>{professionals.length} disponibles</Badge>
+        <section className="grid gap-4">
+          <div className="flex items-end justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-brand-700 md:hidden">
+                Respuesta inmediata
+              </p>
+              <h3 className="mt-1 text-xl font-black leading-tight text-slate-950 md:mt-0 md:font-bold">
+                Profesionales disponibles ahora
+              </h3>
+            </div>
+            <Badge className="shrink-0">
+              {professionals.length} disponibles
+            </Badge>
           </div>
           {professionals.map((professional) => (
             <Card
               key={professional.id}
-              className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between"
+              className="flex flex-col gap-4 p-4 md:flex-row md:items-center md:justify-between md:p-6"
             >
-              <div>
-                <h4 className="text-lg font-bold text-slate-950">
-                  {professional.fullName}
-                </h4>
-                <p className="mt-1 text-sm text-slate-600">
+              <div className="min-w-0">
+                <div className="flex items-start justify-between gap-3 md:block">
+                  <div className="min-w-0">
+                    <p className="truncate text-xs font-semibold uppercase tracking-[0.16em] text-brand-700">
+                      {professional.specialties?.[0]?.name ?? 'Servicio'}
+                    </p>
+                    <h4 className="mt-1 text-lg font-black leading-tight text-slate-950 md:font-bold">
+                      {professional.fullName}
+                    </h4>
+                  </div>
+                  <span className="shrink-0 rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700 md:hidden">
+                    Online
+                  </span>
+                </div>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
                   {professional.city ?? 'Ciudad sin cargar'} -{' '}
                   {professional.zone ?? 'Zona sin cargar'}
                 </p>
-                <p className="mt-2 text-sm font-semibold text-brand-700">
-                  Puntaje {professional.ratingAverage.toFixed(1)} -{' '}
-                  {professional.ratingCount} resenas
-                </p>
+                <div className="mt-3 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
+                  <span className="rounded-2xl bg-slate-100 px-3 py-2 text-sm font-bold text-slate-800">
+                    {professional.ratingAverage.toFixed(1)} puntaje
+                  </span>
+                  <span className="rounded-2xl bg-slate-100 px-3 py-2 text-sm font-bold text-slate-800">
+                    {professional.ratingCount} resenas
+                  </span>
+                </div>
               </div>
-              <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+              <div className="grid gap-2 sm:flex sm:flex-wrap">
                 <Button
                   className="w-full sm:w-auto"
                   disabled={emergencyMutation.isPending}
@@ -283,7 +360,7 @@ export const EmergenciesPage = () => {
                   Solicitar ahora
                 </Button>
                 <a
-                  className="inline-flex min-h-11 w-full items-center justify-center rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 text-center text-sm font-semibold leading-tight text-slate-700 transition hover:border-brand-300 hover:text-brand-700 sm:w-auto"
+                  className="inline-flex min-h-11 w-full items-center justify-center rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 text-center text-sm font-semibold leading-tight text-slate-700 transition hover:border-brand-300 hover:text-brand-700 sm:w-auto"
                   href={`mailto:${professional.email}?subject=Emergencia ArreglaYa`}
                 >
                   Contactar
@@ -291,15 +368,23 @@ export const EmergenciesPage = () => {
               </div>
             </Card>
           ))}
-        </div>
+        </section>
       ) : null}
 
       {noImmediateAvailability ? (
-        <Card>
-          <p className="text-sm font-semibold text-slate-900">
-            No hay profesionales disponibles en este momento.
-          </p>
-          <p className="mt-2 text-sm text-slate-600">
+        <Card className="p-4 sm:p-6">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-700">
+                Sin disponibilidad inmediata
+              </p>
+              <p className="mt-2 text-base font-black leading-tight text-slate-950">
+                No hay profesionales disponibles en este momento.
+              </p>
+            </div>
+            <Badge className="w-fit bg-amber-50 text-amber-700">Agenda</Badge>
+          </div>
+          <p className="mt-3 text-sm leading-6 text-slate-600">
             Puedes agendar la emergencia para el horario mas proximo disponible.
             Te avisaremos cuando el profesional confirme el turno.
           </p>
