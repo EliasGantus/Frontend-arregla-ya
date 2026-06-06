@@ -107,29 +107,78 @@ export const ReviewsPage = () => {
 
     createReviewMutation.mutate(values);
   };
+  const reviewState = visibleReview
+    ? 'Enviada'
+    : selectedBooking
+      ? 'Lista'
+      : 'Pendiente';
 
   return (
-    <div className="space-y-6">
-      <StatusPanel
-        eyebrow="Calificaciones"
-        title="Califica servicios completados"
-        description="Selecciona un servicio terminado, puntua al profesional y publica una resena visible en su perfil."
-        actions={
+    <div className="space-y-5 pb-24 md:space-y-6 md:pb-0">
+      <div className="hidden md:block">
+        <StatusPanel
+          eyebrow="Calificaciones"
+          title="Califica servicios completados"
+          description="Selecciona un servicio terminado, puntua al profesional y publica una resena visible en su perfil."
+          actions={
+            <Button
+              className="w-full sm:w-auto"
+              variant="ghost"
+              onClick={() => {
+                void navigate('/app/reservas');
+              }}
+            >
+              Volver al historial
+            </Button>
+          }
+        />
+      </div>
+
+      <section className="overflow-hidden rounded-[2rem] bg-slate-950 p-5 text-white shadow-2xl shadow-slate-300/50 md:hidden">
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-brand-200">
+              Calificaciones
+            </p>
+            <h1 className="mt-3 text-3xl font-black leading-none">
+              Tu experiencia
+            </h1>
+            <p className="mt-3 text-sm leading-6 text-slate-200">
+              Elegi un servicio completado, puntua al profesional y comparti una
+              resena.
+            </p>
+          </div>
           <Button
-            className="w-full sm:w-auto"
+            className="shrink-0 border-white/10 bg-white/10 px-3 py-2 text-xs text-white hover:bg-white/20"
             variant="ghost"
             onClick={() => {
               void navigate('/app/reservas');
             }}
           >
-            Volver al historial
+            Historial
           </Button>
-        }
-      />
+        </div>
+        <div className="mt-6 grid grid-cols-2 gap-3">
+          <div className="rounded-3xl border border-white/10 bg-white/10 p-3">
+            <p className="text-2xl font-black leading-none">
+              {reviewableBookings.length}
+            </p>
+            <p className="mt-1 text-xs font-semibold uppercase tracking-[0.12em] text-slate-300">
+              Servicios
+            </p>
+          </div>
+          <div className="rounded-3xl border border-white/10 bg-white/10 p-3">
+            <p className="text-lg font-black leading-none">{reviewState}</p>
+            <p className="mt-1 text-xs font-semibold uppercase tracking-[0.12em] text-slate-300">
+              Estado
+            </p>
+          </div>
+        </div>
+      </section>
 
       {bookingsQuery.error instanceof ApiError ||
       reviewsQuery.error instanceof ApiError ? (
-        <Card className="border border-amber-200 bg-amber-50">
+        <Card className="border border-amber-200 bg-amber-50 shadow-amber-100/70">
           <p className="text-sm font-semibold text-amber-800">
             No pudimos cargar calificaciones
           </p>
@@ -143,7 +192,7 @@ export const ReviewsPage = () => {
       ) : null}
 
       {createReviewMutation.error instanceof ApiError ? (
-        <Card className="border border-amber-200 bg-amber-50">
+        <Card className="border border-amber-200 bg-amber-50 shadow-amber-100/70">
           <p className="text-sm font-semibold text-amber-800">
             No pudimos publicar la resena
           </p>
@@ -154,7 +203,7 @@ export const ReviewsPage = () => {
       ) : null}
 
       {visibleReview ? (
-        <Card className="border border-emerald-200 bg-emerald-50">
+        <Card className="border border-emerald-200 bg-emerald-50 shadow-emerald-100/70">
           <p className="text-sm font-semibold text-emerald-800">
             Resena publicada. Este servicio ya no puede volver a calificarse.
           </p>
@@ -185,7 +234,7 @@ export const ReviewsPage = () => {
       ) : null}
 
       {!reviewableBookings.length && !bookingsQuery.isLoading ? (
-        <Card>
+        <Card className="p-4 sm:p-6">
           <p className="text-sm font-semibold text-slate-800">
             Todavia no tenes servicios completados para calificar.
           </p>
@@ -197,7 +246,19 @@ export const ReviewsPage = () => {
       ) : null}
 
       <div className="grid gap-4 lg:grid-cols-[1fr_0.85fr]">
-        <Card>
+        <Card className="p-4 sm:p-6">
+          <div className="mb-5 md:hidden">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-brand-700">
+              Nueva resena
+            </p>
+            <h2 className="mt-2 text-2xl font-black leading-tight text-slate-950">
+              Califica el servicio
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-slate-600">
+              Tu puntuacion ayuda a ordenar profesionales y orientar a otros
+              clientes.
+            </p>
+          </div>
           <form
             className="grid gap-4"
             onSubmit={(event) => void handleSubmit(submitReview)(event)}
@@ -225,15 +286,22 @@ export const ReviewsPage = () => {
             </label>
 
             <div className="space-y-2">
-              <span className="text-sm font-semibold text-slate-700">
-                Calificacion
-              </span>
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-sm font-semibold text-slate-700">
+                  Calificacion
+                </span>
+                {selectedRating ? (
+                  <span className="text-sm font-bold text-brand-700">
+                    {selectedRating}/5
+                  </span>
+                ) : null}
+              </div>
               <input
                 type="hidden"
                 {...register('rating', { valueAsNumber: true })}
               />
               <div
-                className="flex gap-2"
+                className="grid grid-cols-5 gap-2 sm:flex"
                 role="radiogroup"
                 aria-label="Calificacion del profesional"
               >
@@ -242,7 +310,7 @@ export const ReviewsPage = () => {
                     aria-checked={selectedRating === rating}
                     aria-label={`${rating} estrellas`}
                     className={[
-                      'h-12 w-12 rounded-2xl border text-2xl font-black transition',
+                      'flex h-12 w-full items-center justify-center rounded-2xl border text-2xl font-black transition sm:w-12',
                       selectedRating >= rating
                         ? 'border-accent-400 bg-accent-100 text-accent-700'
                         : 'border-slate-200 bg-white text-slate-300 hover:border-accent-300 hover:text-accent-500',
@@ -292,10 +360,24 @@ export const ReviewsPage = () => {
           </form>
         </Card>
 
-        <Card>
-          <p className="text-sm font-semibold uppercase text-slate-400">
-            Resumen del servicio
-          </p>
+        <Card className="p-4 sm:p-6">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+                Resumen del servicio
+              </p>
+              <h2 className="mt-2 text-xl font-black leading-tight text-slate-950 md:text-lg md:font-bold">
+                Servicio seleccionado
+              </h2>
+            </div>
+            {visibleReview ? (
+              <Badge className="shrink-0 bg-emerald-50 text-emerald-700">
+                Enviada
+              </Badge>
+            ) : selectedBooking ? (
+              <Badge className="shrink-0">Lista</Badge>
+            ) : null}
+          </div>
           {selectedBooking ? (
             <div className="mt-4 space-y-4">
               <div>
@@ -308,7 +390,7 @@ export const ReviewsPage = () => {
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="rounded-2xl bg-slate-50 px-4 py-3">
-                  <p className="text-xs font-semibold uppercase text-slate-400">
+                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
                     Fecha
                   </p>
                   <p className="mt-1 text-sm font-bold text-slate-950">
@@ -316,7 +398,7 @@ export const ReviewsPage = () => {
                   </p>
                 </div>
                 <div className="rounded-2xl bg-slate-50 px-4 py-3">
-                  <p className="text-xs font-semibold uppercase text-slate-400">
+                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
                     Estado
                   </p>
                   <p className="mt-1 text-sm font-bold text-slate-950">
@@ -324,11 +406,16 @@ export const ReviewsPage = () => {
                   </p>
                 </div>
               </div>
-              {visibleReview ? (
-                <Badge>Resena enviada</Badge>
-              ) : (
-                <Badge>Listo para calificar</Badge>
-              )}
+              <div className="rounded-2xl border border-brand-100 bg-brand-50 px-4 py-3">
+                <p className="text-sm font-semibold text-brand-800">
+                  {visibleReview ? 'Resena enviada' : 'Listo para calificar'}
+                </p>
+                <p className="mt-1 text-sm leading-6 text-brand-700">
+                  {visibleReview
+                    ? 'El comentario ya esta visible en el perfil del profesional.'
+                    : 'Selecciona estrellas y publica tu experiencia cuando estes listo.'}
+                </p>
+              </div>
             </div>
           ) : (
             <p className="mt-4 text-sm text-slate-600">
