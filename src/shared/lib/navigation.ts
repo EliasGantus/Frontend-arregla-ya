@@ -24,7 +24,7 @@ export const navItems: NavItem[] = [
     to: '/app/cotizaciones',
     roles: ['profesional', 'admin'],
   },
-  { label: 'Administración', to: '/app/admin', roles: ['admin'] },
+  { label: 'Administracion', to: '/app/admin', roles: ['admin'] },
 ];
 
 export const canAccess = (role: UserRole | undefined, roles?: UserRole[]) =>
