@@ -6,17 +6,22 @@ const Probe = () => {
   const auth = useAuth();
 
   return (
-    <button
-      onClick={() =>
-        void auth.login({
-          email: 'cliente@arreglaya.com',
-          password: '123456',
-        })
-      }
-      type="button"
-    >
-      {auth.user?.email ?? 'sin-sesion'}
-    </button>
+    <>
+      <button
+        onClick={() =>
+          void auth.login({
+            email: 'cliente@arreglaya.com',
+            password: '123456',
+          })
+        }
+        type="button"
+      >
+        {auth.user?.email ?? 'sin-sesion'}
+      </button>
+      <button onClick={() => void auth.logout()} type="button">
+        cerrar
+      </button>
+    </>
   );
 };
 
@@ -55,10 +60,50 @@ describe('AuthProvider', () => {
       </AuthProvider>,
     );
 
-    fireEvent.click(getByRole('button'));
+    fireEvent.click(getByRole('button', { name: 'sin-sesion' }));
 
     await waitFor(() =>
       expect(window.localStorage.getItem('arreglaya.session')).toContain('cliente@arreglaya.com'),
+    );
+  });
+
+  it('limpia la sesion local aunque el logout remoto falle', async () => {
+    window.localStorage.setItem(
+      'arreglaya.session',
+      JSON.stringify({
+        accessToken: 'token',
+        refreshToken: 'refresh',
+        user: {
+          id: '1',
+          email: 'cliente@arreglaya.com',
+          fullName: 'Cliente Demo',
+          role: 'cliente',
+        },
+      }),
+    );
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ message: 'logout failed' }), {
+          status: 500,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      ),
+    );
+
+    const { getByRole } = render(
+      <AuthProvider>
+        <Probe />
+      </AuthProvider>,
+    );
+
+    fireEvent.click(getByRole('button', { name: 'cerrar' }));
+
+    await waitFor(() =>
+      expect(window.localStorage.getItem('arreglaya.session')).toBeNull(),
+    );
+    await waitFor(() =>
+      expect(getByRole('button', { name: 'sin-sesion' })).toBeInTheDocument(),
     );
   });
 });

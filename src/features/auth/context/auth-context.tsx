@@ -95,8 +95,13 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
       persistSession(payload);
     },
     logout: async () => {
-      await authService.logout(session.refreshToken);
-      clearSession();
+      try {
+        await authService.logout(session.refreshToken);
+      } catch {
+        // Local logout must not be blocked by a failed remote token invalidation.
+      } finally {
+        clearSession();
+      }
     },
     updateUser: (user) => {
       if (!session.accessToken || !session.refreshToken) {
