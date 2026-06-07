@@ -79,7 +79,7 @@ describe('LoginPage', () => {
     );
   });
 
-  it('limpia la contraseÃ±a cuando el login falla', async () => {
+  it('limpia la contraseña cuando el login falla', async () => {
     const loginSpy = vi.fn().mockRejectedValue(new Error('invalid'));
 
     useAuthMock.mockReturnValue({
