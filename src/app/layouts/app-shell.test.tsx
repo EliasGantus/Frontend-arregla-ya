@@ -15,7 +15,7 @@ describe('AppShell', () => {
     vi.resetAllMocks();
   });
 
-  it('oculta administración para profesionales', () => {
+  it('oculta administracion para profesionales', () => {
     useAuthMock.mockReturnValue({
       user: {
         id: '2',
@@ -43,7 +43,11 @@ describe('AppShell', () => {
       </MemoryRouter>,
     );
 
-    expect(screen.queryByText('Administración')).not.toBeInTheDocument();
-    expect(screen.getByText('Cotizaciones')).toBeInTheDocument();
+    expect(
+      screen.queryByRole('link', { name: 'Administracion' }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getAllByRole('link', { name: 'Cotizaciones' }).length,
+    ).toBeGreaterThan(0);
   });
 });

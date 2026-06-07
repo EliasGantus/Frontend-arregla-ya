@@ -6,6 +6,7 @@ import { canAccess, navItems } from '@/shared/lib/navigation';
 import { Badge } from '@/shared/ui/badge';
 import { Button } from '@/shared/ui/button';
 import { Card } from '@/shared/ui/card';
+import type { UserRole } from '@/shared/types/api';
 
 const roleCopy = {
   cliente: 'Cliente',
@@ -17,43 +18,116 @@ const mobileLabelByPath: Record<string, string> = {
   '/app': 'Inicio',
   '/app/perfil': 'Perfil',
   '/app/solicitudes': 'Solicitudes',
+  '/app/reservas': 'Reservas',
   '/app/cotizaciones': 'Cotizaciones',
+  '/app/admin': 'Admin',
 };
 
 const NavIconHome = () => (
-  <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-    <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z" strokeLinejoin="round" />
+  <svg
+    className="h-5 w-5"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={2}
+    viewBox="0 0 24 24"
+  >
+    <path
+      d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"
+      strokeLinejoin="round"
+    />
     <path d="M9 21V12h6v9" strokeLinejoin="round" />
   </svg>
 );
 
 const NavIconUser = () => (
-  <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+  <svg
+    className="h-5 w-5"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={2}
+    viewBox="0 0 24 24"
+  >
     <circle cx="12" cy="8" r="4" />
     <path d="M4 20c0-3.866 3.582-7 8-7s8 3.134 8 7" strokeLinecap="round" />
   </svg>
 );
 
 const NavIconFile = () => (
-  <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-    <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z" strokeLinejoin="round" />
+  <svg
+    className="h-5 w-5"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={2}
+    viewBox="0 0 24 24"
+  >
+    <path
+      d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z"
+      strokeLinejoin="round"
+    />
     <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" strokeLinecap="round" />
   </svg>
 );
 
 const NavIconWallet = () => (
-  <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+  <svg
+    className="h-5 w-5"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={2}
+    viewBox="0 0 24 24"
+  >
     <rect height="14" rx="2" width="20" x="2" y="5" />
     <path d="M2 10h20" strokeLinecap="round" />
     <circle cx="16" cy="15" fill="currentColor" r="1" stroke="none" />
   </svg>
 );
 
-const mobileIconByPath: Record<string, React.ReactNode> = {
+const NavIconCalendar = () => (
+  <svg
+    className="h-5 w-5"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={2}
+    viewBox="0 0 24 24"
+  >
+    <rect height="18" rx="2" width="18" x="3" y="4" />
+    <path d="M8 2v4M16 2v4M3 10h18" strokeLinecap="round" />
+    <path
+      d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"
+      strokeLinecap="round"
+    />
+  </svg>
+);
+
+const NavIconShield = () => (
+  <svg
+    className="h-5 w-5"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={2}
+    viewBox="0 0 24 24"
+  >
+    <path
+      d="M12 3l7 3v5c0 4.5-2.8 8.6-7 10-4.2-1.4-7-5.5-7-10V6l7-3z"
+      strokeLinejoin="round"
+    />
+    <path d="M9 12l2 2 4-5" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+const mobileIconByPath: Record<string, ReactNode> = {
   '/app': <NavIconHome />,
   '/app/perfil': <NavIconUser />,
   '/app/solicitudes': <NavIconFile />,
+  '/app/reservas': <NavIconCalendar />,
   '/app/cotizaciones': <NavIconWallet />,
+  '/app/admin': <NavIconShield />,
+};
+
+const mobilePriorityByRole: Record<UserRole, string[]> = {
+  cliente: ['/app', '/app/solicitudes', '/app/reservas', '/app/perfil'],
+  profesional: ['/app', '/app/solicitudes', '/app/cotizaciones', '/app/perfil'],
+  admin: ['/app', '/app/admin', '/app/solicitudes', '/app/perfil'],
 };
 
 const getInitials = (name: string | undefined) =>
@@ -71,11 +145,12 @@ export const AppShell = () => {
   const availableItems = navItems.filter((item) =>
     canAccess(user?.role, item.roles),
   );
-  const mobileItems = availableItems.filter((item) =>
-    ['/app', '/app/perfil', '/app/solicitudes', '/app/cotizaciones'].includes(
-      item.to,
-    ),
-  );
+  const mobilePriority =
+    mobilePriorityByRole[user?.role ?? 'cliente'] ??
+    mobilePriorityByRole.cliente;
+  const mobileItems = mobilePriority
+    .map((path) => availableItems.find((item) => item.to === path))
+    .filter((item): item is (typeof availableItems)[number] => Boolean(item));
   const activeItem =
     availableItems
       .filter((item) =>
@@ -86,8 +161,6 @@ export const AppShell = () => {
       )
       .sort((current, next) => next.to.length - current.to.length)
       .at(0) ?? availableItems[0];
-  const visibleMobileItems = mobileItems;
-
   return (
     <div className="min-h-screen overflow-x-clip bg-[#eef2f8] text-ink md:bg-gradient-to-b md:from-mist md:via-white md:to-slate-100">
       <div className="md:hidden">
@@ -206,9 +279,16 @@ export const AppShell = () => {
         </main>
       </div>
 
-      <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white/95 px-4 pb-3 pt-2 shadow-2xl shadow-slate-900/15 backdrop-blur md:hidden">
-        <div className={`mx-auto grid max-w-md gap-2 ${visibleMobileItems.length >= 4 ? 'grid-cols-4' : 'grid-cols-3'}`}>
-          {visibleMobileItems.map((item) => (
+      <nav
+        aria-label="Navegacion principal mobile"
+        className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white/95 px-4 pb-3 pt-2 shadow-2xl shadow-slate-900/15 backdrop-blur md:hidden"
+      >
+        <div
+          className={`mx-auto grid max-w-md gap-2 ${
+            mobileItems.length >= 4 ? 'grid-cols-4' : 'grid-cols-3'
+          }`}
+        >
+          {mobileItems.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
@@ -223,9 +303,13 @@ export const AppShell = () => {
               }
             >
               <span className="flex items-center justify-center">
-                {(mobileIconByPath[item.to] as ReactNode) ?? <NavIconFile />}
+                {mobileIconByPath[item.to] ?? <NavIconFile />}
               </span>
-              <span className={`mt-0.5 ${visibleMobileItems.length >= 4 ? 'text-[10px]' : 'text-xs'}`}>
+              <span
+                className={`mt-0.5 ${
+                  mobileItems.length >= 4 ? 'text-[10px]' : 'text-xs'
+                }`}
+              >
                 {mobileLabelByPath[item.to] ?? item.label}
               </span>
             </NavLink>
