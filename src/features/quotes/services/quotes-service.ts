@@ -5,6 +5,9 @@ export const quotesService = {
   listMine() {
     return httpClient.get<Quote[]>('/quotes/me');
   },
+  listForRequest(serviceRequestId: string) {
+    return httpClient.get<Quote[]>(`/service-requests/${serviceRequestId}/quotes`);
+  },
   create(payload: CreateQuoteInput) {
     return httpClient.post<Quote>(`/service-requests/${payload.serviceRequestId}/quotes`, payload);
   },
