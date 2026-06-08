@@ -1,5 +1,5 @@
 import { httpClient } from '@/shared/api/http-client';
-import type { CreateQuoteInput, Quote } from '@/shared/types/api';
+import type { CreateQuoteInput, Quote, UpdateQuoteInput } from '@/shared/types/api';
 
 export const quotesService = {
   listMine() {
@@ -10,5 +10,8 @@ export const quotesService = {
   },
   create(payload: CreateQuoteInput) {
     return httpClient.post<Quote>(`/service-requests/${payload.serviceRequestId}/quotes`, payload);
+  },
+  update(quoteId: string, payload: UpdateQuoteInput) {
+    return httpClient.patch<Quote>(`/quotes/${quoteId}`, payload);
   },
 };

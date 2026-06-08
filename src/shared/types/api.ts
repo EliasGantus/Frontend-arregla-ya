@@ -130,6 +130,10 @@ export interface CreateQuoteInput {
   message: string;
 }
 
+export interface UpdateQuoteInput {
+  status: Extract<QuoteStatus, 'accepted' | 'rejected'>;
+}
+
 export type BookingStatus = 'pending' | 'confirmed' | 'completed' | 'cancelled';
 
 export interface Booking {

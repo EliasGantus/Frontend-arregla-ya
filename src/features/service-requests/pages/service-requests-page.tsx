@@ -553,6 +553,21 @@ const ServiceRequestDetailContent = () => {
       void navigate('/app/reservas', { state: { booking } });
     },
   });
+  const quoteStatusMutation = useMutation({
+    mutationFn: ({
+      quoteId,
+      status,
+    }: {
+      quoteId: string;
+      status: 'accepted' | 'rejected';
+    }) => quotesService.update(quoteId, { status }),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['quotes', 'request', requestId] }),
+        queryClient.invalidateQueries({ queryKey: ['service-requests'] }),
+      ]);
+    },
+  });
   const quotes = quotesQuery.data ?? [];
   const canSubmitBooking =
     Boolean(scheduledDate && scheduledTime) && !bookingMutation.isPending;
@@ -698,7 +713,8 @@ const ServiceRequestDetailContent = () => {
       {canReviewQuotes ? (
         <section className="space-y-4">
           {(quotesQuery.error instanceof ApiError ||
-            bookingMutation.error instanceof ApiError) ? (
+            bookingMutation.error instanceof ApiError ||
+            quoteStatusMutation.error instanceof ApiError) ? (
             <Card className="rounded-[28px] border border-amber-200 bg-amber-50 md:rounded-3xl">
               <p className="text-sm font-semibold text-amber-800">
                 No pudimos sincronizar cotizaciones
@@ -706,6 +722,8 @@ const ServiceRequestDetailContent = () => {
               <p className="mt-2 text-sm text-amber-700">
                 {(bookingMutation.error instanceof ApiError &&
                   bookingMutation.error.message) ||
+                  (quoteStatusMutation.error instanceof ApiError &&
+                    quoteStatusMutation.error.message) ||
                   (quotesQuery.error instanceof ApiError &&
                     quotesQuery.error.message)}
               </p>
@@ -809,8 +827,39 @@ const ServiceRequestDetailContent = () => {
                   {quote.message}
                 </p>
 
+                {quote.status === 'pending' ? (
+                  <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                    <Button
+                      aria-label={`Aceptar cotizacion de ${quote.professionalName}`}
+                      disabled={quoteStatusMutation.isPending}
+                      onClick={() =>
+                        quoteStatusMutation.mutate({
+                          quoteId: quote.id,
+                          status: 'accepted',
+                        })
+                      }
+                      variant="secondary"
+                    >
+                      {quoteStatusMutation.isPending ? 'Actualizando...' : 'Aceptar'}
+                    </Button>
+                    <Button
+                      aria-label={`Rechazar cotizacion de ${quote.professionalName}`}
+                      disabled={quoteStatusMutation.isPending}
+                      onClick={() =>
+                        quoteStatusMutation.mutate({
+                          quoteId: quote.id,
+                          status: 'rejected',
+                        })
+                      }
+                      variant="ghost"
+                    >
+                      Rechazar
+                    </Button>
+                  </div>
+                ) : null}
+
                 <Button
-                  className="mt-4 w-full sm:w-auto"
+                  className="mt-3 w-full sm:w-auto"
                   disabled={!canSubmitBooking}
                   onClick={() => bookingMutation.mutate(quote)}
                   variant="secondary"
