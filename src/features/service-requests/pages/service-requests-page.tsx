@@ -2,9 +2,11 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 
 import { useAuth } from '@/features/auth/context/auth-context';
+import { bookingsService } from '@/features/bookings/services/bookings-service';
+import { quotesService } from '@/features/quotes/services/quotes-service';
 import { categoriesService } from '@/features/service-requests/services/categories-service';
 import { serviceRequestsService } from '@/features/service-requests/services/service-requests-service';
 import { ApiError } from '@/shared/api/api-error';
@@ -13,6 +15,7 @@ import type {
   CreateServiceRequestInput,
   ServiceRequest,
   ServiceRequestStatus,
+  Quote,
 } from '@/shared/types/api';
 import {
   serviceRequestSchema,
@@ -47,6 +50,13 @@ const statusTone: Record<ServiceRequestStatus, string> = {
   cancelled: 'bg-red-50 text-red-700',
 };
 
+const quoteStatusCopy: Record<Quote['status'], string> = {
+  pending: 'Pendiente',
+  accepted: 'Aceptada',
+  rejected: 'Rechazada',
+  withdrawn: 'Retirada',
+};
+
 const formatRequestDate = (value: string) => {
   const date = new Date(value);
 
@@ -59,6 +69,9 @@ const formatRequestDate = (value: string) => {
     month: 'short',
   }).format(date);
 };
+
+const toScheduledAt = (date: string, time: string) =>
+  new Date(`${date}T${time}:00`).toISOString();
 
 const statusCount = (
   requests: ServiceRequest[],
@@ -504,13 +517,45 @@ const ServiceRequestsContent = () => {
 
 const ServiceRequestDetailContent = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const { requestId } = useParams();
+  const queryClient = useQueryClient();
+  const [scheduledDate, setScheduledDate] = useState('');
+  const [scheduledTime, setScheduledTime] = useState('');
+  const [bookingNotes, setBookingNotes] = useState('');
   const query = useQuery({
     queryKey: ['service-requests'],
     queryFn: () => serviceRequestsService.list(),
   });
   const request = (query.data ?? []).find((item) => item.id === requestId);
   const isProfessionalView = user?.role === 'profesional';
+  const canReviewQuotes =
+    Boolean(requestId && request) &&
+    (user?.role === 'cliente' || user?.role === 'admin');
+  const quotesQuery = useQuery({
+    queryKey: ['quotes', 'request', requestId],
+    queryFn: () => quotesService.listForRequest(requestId ?? ''),
+    enabled: canReviewQuotes,
+  });
+  const bookingMutation = useMutation({
+    mutationFn: (quote: Quote) =>
+      bookingsService.create({
+        serviceRequestId: quote.serviceRequestId,
+        professionalId: quote.professionalId,
+        scheduledAt: toScheduledAt(scheduledDate, scheduledTime),
+        notes: bookingNotes.trim() || undefined,
+      }),
+    onSuccess: async (booking) => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['bookings'] }),
+        queryClient.invalidateQueries({ queryKey: ['service-requests'] }),
+      ]);
+      void navigate('/app/reservas', { state: { booking } });
+    },
+  });
+  const quotes = quotesQuery.data ?? [];
+  const canSubmitBooking =
+    Boolean(scheduledDate && scheduledTime) && !bookingMutation.isPending;
 
   if (query.error instanceof ApiError) {
     return (
@@ -649,6 +694,136 @@ const ServiceRequestDetailContent = () => {
           </Link>
         </Card>
       </div>
+
+      {canReviewQuotes ? (
+        <section className="space-y-4">
+          {(quotesQuery.error instanceof ApiError ||
+            bookingMutation.error instanceof ApiError) ? (
+            <Card className="rounded-[28px] border border-amber-200 bg-amber-50 md:rounded-3xl">
+              <p className="text-sm font-semibold text-amber-800">
+                No pudimos sincronizar cotizaciones
+              </p>
+              <p className="mt-2 text-sm text-amber-700">
+                {(bookingMutation.error instanceof ApiError &&
+                  bookingMutation.error.message) ||
+                  (quotesQuery.error instanceof ApiError &&
+                    quotesQuery.error.message)}
+              </p>
+            </Card>
+          ) : null}
+
+          <Card className="rounded-[28px] bg-white p-4 shadow-lg shadow-slate-200/70 md:rounded-3xl md:p-6">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
+                  Propuestas
+                </p>
+                <h2 className="mt-2 text-xl font-black text-slate-950">
+                  Propuestas recibidas
+                </h2>
+                <p className="mt-1 text-sm text-slate-500">
+                  Elegi una propuesta, coordina fecha y deja la reserva
+                  pendiente de confirmacion.
+                </p>
+              </div>
+              <Badge>{quotes.length} recibidas</Badge>
+            </div>
+
+            <div className="mt-5 grid gap-3 md:grid-cols-3">
+              <label className="space-y-2">
+                <span className="text-sm font-semibold text-slate-700">
+                  Fecha tentativa
+                </span>
+                <Input
+                  type="date"
+                  value={scheduledDate}
+                  onChange={(event) => setScheduledDate(event.target.value)}
+                />
+              </label>
+              <label className="space-y-2">
+                <span className="text-sm font-semibold text-slate-700">
+                  Horario
+                </span>
+                <Input
+                  type="time"
+                  value={scheduledTime}
+                  onChange={(event) => setScheduledTime(event.target.value)}
+                />
+              </label>
+              <label className="space-y-2 md:col-span-1">
+                <span className="text-sm font-semibold text-slate-700">
+                  Notas para la reserva
+                </span>
+                <Input
+                  placeholder="Ej: Coordinar acceso"
+                  value={bookingNotes}
+                  onChange={(event) => setBookingNotes(event.target.value)}
+                />
+              </label>
+            </div>
+          </Card>
+
+          {!quotes.length && !quotesQuery.isLoading ? (
+            <Card className="rounded-[28px] bg-white p-5 text-center shadow-lg shadow-slate-200/70 md:rounded-3xl">
+              <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-accent-50 text-xl font-black text-accent-600">
+                0
+              </div>
+              <h3 className="mt-4 text-lg font-black text-slate-950">
+                Todavia no hay cotizaciones
+              </h3>
+              <p className="mx-auto mt-2 max-w-sm text-sm text-slate-600">
+                Cuando un profesional envie una propuesta, vas a poder
+                reservarla desde este detalle.
+              </p>
+            </Card>
+          ) : null}
+
+          <div className="grid gap-4 md:grid-cols-2">
+            {quotes.map((quote) => (
+              <Card
+                key={quote.id}
+                className="rounded-[28px] bg-white p-4 shadow-lg shadow-slate-200/70 md:rounded-3xl md:p-6"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
+                      Profesional
+                    </p>
+                    <h3 className="mt-1 text-lg font-black leading-tight text-slate-950">
+                      {quote.professionalName}
+                    </h3>
+                  </div>
+                  <Badge>{quoteStatusCopy[quote.status]}</Badge>
+                </div>
+
+                <div className="mt-4 rounded-2xl bg-slate-50 px-4 py-3">
+                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
+                    Monto
+                  </p>
+                  <p className="mt-1 text-2xl font-black text-slate-950">
+                    {quote.amount}
+                  </p>
+                </div>
+
+                <p className="mt-4 text-sm leading-6 text-slate-600">
+                  {quote.message}
+                </p>
+
+                <Button
+                  className="mt-4 w-full sm:w-auto"
+                  disabled={!canSubmitBooking}
+                  onClick={() => bookingMutation.mutate(quote)}
+                  variant="secondary"
+                >
+                  {bookingMutation.isPending
+                    ? 'Reservando...'
+                    : `Reservar con ${quote.professionalName}`}
+                </Button>
+              </Card>
+            ))}
+          </div>
+        </section>
+      ) : null}
     </div>
   );
 };
