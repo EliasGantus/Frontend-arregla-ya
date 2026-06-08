@@ -35,6 +35,22 @@ export const waitForOk = async ({
   throw new Error(`No se pudo alcanzar ${label} en ${url}.`);
 };
 
+const readErrorBody = async (response) => {
+  try {
+    if (typeof response.text === 'function') {
+      return await response.text();
+    }
+
+    if (typeof response.json === 'function') {
+      return JSON.stringify(await response.json());
+    }
+  } catch {
+    return '';
+  }
+
+  return '';
+};
+
 const requestJson = async ({
   body,
   fetchImpl,
@@ -56,13 +72,19 @@ const requestJson = async ({
     requestHeaders.Authorization = `Bearer ${token}`;
   }
 
-  const response = await fetchImpl(`${backendUrl}${path}`, {
+  const url = `${backendUrl}${path}`;
+  const response = await fetchImpl(url, {
     method,
     headers: requestHeaders,
     body: body === undefined ? undefined : JSON.stringify(body),
   });
 
-  assert(response.ok, `${method} ${path} fallo con status ${response.status}.`);
+  if (!response.ok) {
+    const errorBody = await readErrorBody(response);
+    const bodyDetails = errorBody ? ` Body: ${errorBody}` : '';
+    throw new Error(`${method} ${url} fallo con status ${response.status}.${bodyDetails}`);
+  }
+
   return response.json();
 };
 

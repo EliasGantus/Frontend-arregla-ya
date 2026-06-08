@@ -6,6 +6,7 @@ const jsonResponse = (body, status = 200) => ({
   ok: status >= 200 && status < 300,
   status,
   json: async () => body,
+  text: async () => (typeof body === 'string' ? body : JSON.stringify(body)),
 });
 
 describe('runFullFlowSmoke', () => {
@@ -165,5 +166,74 @@ describe('runFullFlowSmoke', () => {
       rating: 5,
       comment: 'Smoke full flow completed successfully.',
     });
+  });
+
+  it('includes backend response body when a backend request fails', async () => {
+    const fetchImpl = async (url, options = {}) => {
+      const { pathname } = new URL(url);
+      const method = options.method ?? 'GET';
+      const body = options.body ? JSON.parse(options.body) : undefined;
+
+      if (pathname === '/health') {
+        return jsonResponse({ status: 'ok' });
+      }
+
+      if (pathname === '/login') {
+        return jsonResponse('<html></html>');
+      }
+
+      if (pathname === '/auth/login' && body.email === 'cliente@arreglaya.com') {
+        return jsonResponse({ accessToken: 'client-token', user: { id: 'client-1' } });
+      }
+
+      if (pathname === '/auth/login' && body.email === 'pro@arreglaya.com') {
+        return jsonResponse({ accessToken: 'pro-token', user: { id: 'pro-1' } });
+      }
+
+      if (pathname === '/categories') {
+        return jsonResponse([{ id: 'category-1', name: 'Plomeria', slug: 'plomeria' }]);
+      }
+
+      if (pathname === '/service-requests' && method === 'POST') {
+        return jsonResponse({
+          id: 'request-1',
+          title: body.title,
+          status: 'open',
+          category: { id: body.categoryId, name: 'Plomeria', slug: 'plomeria' },
+        }, 201);
+      }
+
+      if (pathname === '/service-requests/request-1/quotes' && method === 'POST') {
+        return jsonResponse({
+          id: 'quote-1',
+          serviceRequestId: 'request-1',
+          professionalId: 'pro-1',
+          amount: body.amount,
+          status: 'pending',
+        }, 201);
+      }
+
+      if (pathname === '/quotes/quote-1' && method === 'PATCH') {
+        return jsonResponse({
+          code: 'QUOTE_FORBIDDEN',
+          message: 'No puedes resolver cotizaciones de otra solicitud.',
+        }, 403);
+      }
+
+      throw new Error(`Unexpected request: ${method} ${pathname}`);
+    };
+
+    await expect(
+      runFullFlowSmoke({
+        backendUrl: 'http://backend.test',
+        frontendUrl: 'http://frontend.test',
+        fetchImpl,
+        sleep: async () => {},
+        uniqueId: 'test-123',
+        scheduledAt: '2026-06-14T15:00:00.000Z',
+      }),
+    ).rejects.toThrow(
+      /PATCH http:\/\/backend\.test\/quotes\/quote-1 fallo con status 403.*QUOTE_FORBIDDEN/s,
+    );
   });
 });
