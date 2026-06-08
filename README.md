@@ -32,6 +32,33 @@ npm run test
 npm run build
 ```
 
+## Smoke E2E con backend real
+
+El smoke real valida el flujo completo contra servicios locales: login de cliente y profesional, creacion de solicitud, cotizacion, aceptacion, reserva, confirmacion, pago por webhook, comprobante, finalizacion y resena.
+
+Prerequisitos:
+
+- Frontend local disponible en `http://127.0.0.1:5173/login`.
+- Backend local actualizado con `main` disponible en `http://127.0.0.1:3000/health`.
+- Base de datos con seed de `cliente@arreglaya.com` y `pro@arreglaya.com`, ambos con password `123456`.
+- Backend con las rutas actuales de cotizaciones, reservas, pagos y resenas.
+
+Comando:
+
+```bash
+npm run smoke:e2e
+```
+
+Tambien se pueden apuntar URLs alternativas:
+
+```powershell
+$env:FRONTEND_URL='http://127.0.0.1:5173'
+$env:BACKEND_URL='http://127.0.0.1:3001'
+npm run smoke:e2e
+```
+
+Si el smoke falla en `PATCH /quotes/:id` con `403`, normalmente significa que el backend local no esta actualizado con la rama `main` que incluye resolucion de cotizaciones por el cliente.
+
 ## Estructura
 
 - `src/app`: bootstrap, router, layouts y guards
