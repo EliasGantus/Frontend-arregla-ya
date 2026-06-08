@@ -98,7 +98,20 @@ Revisión completa de bugs visuales, de lógica de negocio y UX identificados co
 
 ---
 
-## Pendiente (fuera de scope de esta revisión)
+## Tercera ronda de fixes (2026-06-08) - cierre QA
 
-- **#1 — Quote accept/reject:** El flujo de aceptar/rechazar cotizaciones del cliente no tiene endpoint en el backend (`PATCH /quotes/:id` no existe). Requiere nuevo endpoint y UI.
-- **Dashboard metrics:** Los valores del dashboard (solicitudes activas, tasa de éxito, etc.) son estáticos. Requiere endpoints de agregación o cálculo en el frontend.
+### #1 - Quote accept/reject
+**Archivos:** `src/modules/quotes/quotes.routes.ts`, `src/features/service-requests/pages/service-requests-page.tsx`, `src/features/quotes/services/quotes-service.ts`
+**Problema:** El cliente no podia aceptar o rechazar cotizaciones recibidas desde la app.
+**Fix:** Se agrego `PATCH /quotes/:id` en backend y acciones de aceptar/rechazar en el detalle de solicitud.
+
+### Dashboard metrics con datos reales
+**Archivo:** `src/features/auth/pages/dashboard-page.tsx`
+**Problema:** Los valores del dashboard eran estaticos por rol.
+**Fix:** El dashboard ahora calcula metricas desde servicios existentes: solicitudes/reservas para cliente, cotizaciones/reservas para profesional, y usuarios/solicitudes globales para admin.
+
+---
+
+## Pendiente
+
+No quedan pendientes funcionales registrados en esta revision.

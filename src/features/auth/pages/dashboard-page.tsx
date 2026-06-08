@@ -1,26 +1,87 @@
+import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 
+import { adminService } from '@/features/admin/services/admin-service';
 import { useAuth } from '@/features/auth/context/auth-context';
+import { bookingsService } from '@/features/bookings/services/bookings-service';
+import { quotesService } from '@/features/quotes/services/quotes-service';
+import { serviceRequestsService } from '@/features/service-requests/services/service-requests-service';
+import { ApiError } from '@/shared/api/api-error';
+import type { Booking, Quote, ServiceRequest, UserRole } from '@/shared/types/api';
 import { Card } from '@/shared/ui/card';
 import { StatusPanel } from '@/shared/ui/status-panel';
 
-const metricsByRole = {
-  cliente: [
-    { label: 'Solicitudes activas', value: '03' },
-    { label: 'Profesionales cotizando', value: '12' },
-    { label: 'Tiempo promedio', value: '2h' },
-  ],
-  profesional: [
-    { label: 'Cotizaciones enviadas', value: '18' },
-    { label: 'Trabajos asignados', value: '3' },
-    { label: 'Tasa de exito', value: '31%' },
-  ],
-  admin: [
-    { label: 'Usuarios activos', value: '284' },
-    { label: 'Solicitudes abiertas', value: '124' },
-    { label: 'Alertas pendientes', value: '06' },
-  ],
+type DashboardMetric = {
+  label: string;
+  value: string;
 };
+
+const activeRequestStatuses: ServiceRequest['status'][] = ['open', 'quoted', 'assigned'];
+const activeBookingStatuses: Booking['status'][] = ['pending', 'confirmed'];
+
+const formatCount = (value: number) => String(value).padStart(2, '0');
+
+const percentage = (count: number, total: number) =>
+  total > 0 ? `${Math.round((count / total) * 100)}%` : '0%';
+
+const metricsForClient = (
+  requests: ServiceRequest[],
+  bookings: Booking[],
+): DashboardMetric[] => [
+  {
+    label: 'Solicitudes activas',
+    value: formatCount(
+      requests.filter((request) => activeRequestStatuses.includes(request.status)).length,
+    ),
+  },
+  {
+    label: 'Cotizadas',
+    value: formatCount(requests.filter((request) => request.status === 'quoted').length),
+  },
+  {
+    label: 'Reservas activas',
+    value: formatCount(
+      bookings.filter((booking) => activeBookingStatuses.includes(booking.status)).length,
+    ),
+  },
+];
+
+const metricsForProfessional = (
+  quotes: Quote[],
+  bookings: Booking[],
+): DashboardMetric[] => [
+  { label: 'Cotizaciones enviadas', value: formatCount(quotes.length) },
+  {
+    label: 'Trabajos asignados',
+    value: formatCount(
+      bookings.filter((booking) => activeBookingStatuses.includes(booking.status)).length,
+    ),
+  },
+  {
+    label: 'Tasa de exito',
+    value: percentage(
+      quotes.filter((quote) => quote.status === 'accepted').length,
+      quotes.length,
+    ),
+  },
+];
+
+const metricsForAdmin = (
+  usersCount: number,
+  requests: ServiceRequest[],
+): DashboardMetric[] => [
+  { label: 'Usuarios activos', value: formatCount(usersCount) },
+  {
+    label: 'Solicitudes abiertas',
+    value: formatCount(
+      requests.filter((request) => activeRequestStatuses.includes(request.status)).length,
+    ),
+  },
+  {
+    label: 'Completadas',
+    value: formatCount(requests.filter((request) => request.status === 'completed').length),
+  },
+];
 
 const actionByRole: Record<string, { title: string; description: string; path: string }[]> = {
   cliente: [
@@ -67,6 +128,42 @@ export const DashboardPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const role = user?.role ?? 'cliente';
+  const serviceRequestsQuery = useQuery({
+    queryKey: ['dashboard', 'service-requests', role],
+    queryFn: () => serviceRequestsService.list(),
+    enabled: role === 'cliente',
+  });
+  const bookingsQuery = useQuery({
+    queryKey: ['dashboard', 'bookings', role],
+    queryFn: () => bookingsService.list(),
+    enabled: role === 'cliente' || role === 'profesional',
+  });
+  const quotesQuery = useQuery({
+    queryKey: ['dashboard', 'quotes', role],
+    queryFn: () => quotesService.listMine(),
+    enabled: role === 'profesional',
+  });
+  const adminUsersQuery = useQuery({
+    queryKey: ['dashboard', 'admin', 'users'],
+    queryFn: () => adminService.users(),
+    enabled: role === 'admin',
+  });
+  const adminRequestsQuery = useQuery({
+    queryKey: ['dashboard', 'admin', 'service-requests'],
+    queryFn: () => adminService.serviceRequests(),
+    enabled: role === 'admin',
+  });
+  const metricsByRole: Record<UserRole, DashboardMetric[]> = {
+    cliente: metricsForClient(serviceRequestsQuery.data ?? [], bookingsQuery.data ?? []),
+    profesional: metricsForProfessional(quotesQuery.data ?? [], bookingsQuery.data ?? []),
+    admin: metricsForAdmin(adminUsersQuery.data?.length ?? 0, adminRequestsQuery.data ?? []),
+  };
+  const metricError =
+    serviceRequestsQuery.error ||
+    bookingsQuery.error ||
+    quotesQuery.error ||
+    adminUsersQuery.error ||
+    adminRequestsQuery.error;
   const metrics = metricsByRole[role];
   const actions = actionByRole[role];
 
@@ -88,6 +185,15 @@ export const DashboardPage = () => {
           description="Este panel actua como home privada. Desde aqui cuelgan rutas protegidas, sesion persistente y navegacion por rol."
         />
       </div>
+
+      {metricError instanceof ApiError ? (
+        <Card className="border border-amber-200 bg-amber-50">
+          <p className="text-sm font-semibold text-amber-800">
+            No pudimos cargar metricas actualizadas
+          </p>
+          <p className="mt-2 text-sm text-amber-700">{metricError.message}</p>
+        </Card>
+      ) : null}
 
       <div className="grid grid-cols-3 gap-3 md:gap-4">
         {metrics.map((metric) => (
