@@ -59,6 +59,7 @@
 - `GET /service-requests`
 - `POST /service-requests`
 - `GET /quotes/me`
+- `PATCH /quotes/:id`
 - `POST /service-requests/:id/quotes`
 
 ## Admin

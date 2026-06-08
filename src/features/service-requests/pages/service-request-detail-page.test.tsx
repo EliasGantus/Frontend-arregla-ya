@@ -22,6 +22,7 @@ vi.mock('@/features/bookings/services/bookings-service', () => ({
 vi.mock('@/features/quotes/services/quotes-service', () => ({
   quotesService: {
     listForRequest: vi.fn(),
+    update: vi.fn(),
   },
 }));
 
@@ -33,7 +34,10 @@ vi.mock('@/features/service-requests/services/service-requests-service', () => (
 
 const useAuthMock = vi.mocked(useAuth);
 const bookingsServiceMock = vi.mocked(bookingsService);
-const quotesServiceMock = vi.mocked(quotesService);
+const quotesServiceMock = vi.mocked(quotesService) as unknown as {
+  listForRequest: ReturnType<typeof vi.fn>;
+  update: ReturnType<typeof vi.fn>;
+};
 const serviceRequestsServiceMock = vi.mocked(serviceRequestsService);
 
 const TestProviders = ({ children }: PropsWithChildren) => {
@@ -107,6 +111,19 @@ describe('ServiceRequestDetailPage', () => {
         createdAt: '2026-05-28T13:00:00.000Z',
       },
     ]);
+    quotesServiceMock.update.mockImplementation((quoteId: string, payload: { status: string }) =>
+      Promise.resolve({
+        id: quoteId,
+        serviceRequestId: 'request-1',
+        serviceRequestTitle: 'Arreglo de canilla',
+        professionalId: 'pro-1',
+        professionalName: 'Ana Ruiz',
+        amount: '85000',
+        status: payload.status,
+        message: 'Puedo resolverlo durante la tarde.',
+        createdAt: '2026-05-28T13:00:00.000Z',
+      }),
+    );
     bookingsServiceMock.create.mockResolvedValue({
       id: 'booking-1',
       serviceRequestId: 'request-1',
@@ -154,5 +171,39 @@ describe('ServiceRequestDetailPage', () => {
       }),
     );
     expect(await screen.findByText('Reservas')).toBeInTheDocument();
+  });
+
+  it('permite aceptar una cotizacion recibida', async () => {
+    renderPage();
+
+    expect(await screen.findByText('Ana Ruiz')).toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'Aceptar cotizacion de Ana Ruiz',
+      }),
+    );
+
+    await waitFor(() =>
+      expect(quotesServiceMock.update).toHaveBeenCalledWith('quote-1', {
+        status: 'accepted',
+      }),
+    );
+  });
+
+  it('permite rechazar una cotizacion recibida', async () => {
+    renderPage();
+
+    expect(await screen.findByText('Ana Ruiz')).toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'Rechazar cotizacion de Ana Ruiz',
+      }),
+    );
+
+    await waitFor(() =>
+      expect(quotesServiceMock.update).toHaveBeenCalledWith('quote-1', {
+        status: 'rejected',
+      }),
+    );
   });
 });
