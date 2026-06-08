@@ -66,14 +66,17 @@ The following records were created or updated against the running backend and ex
 - Backend repository had pre-existing uncommitted/untracked changes; no backend files were modified for this report.
 - Client rating of a completed job is supported by the backend: the executed completed-booking path accepted `POST /reviews` and updated the professional review list. Route inspection also shows a guard that should reject review creation before completion, but that negative path was not executed in this QA pass.
 - Payment can be created in local/dev mode without a MercadoPago token; the backend returns a pending checkout URL and the webhook path can mark it approved, enabling receipt retrieval.
-- UI logout/session switching needs follow-up: the desktop `Cerrar sesion` button was visible and clicked, but the browser remained authenticated as `pro@arreglaya.com`; this blocked completing client/admin UI passes in the same browser session.
-- The seeded professional login currently renders `Lucia Benitez` as the professional name in UI/API data, not Carlos Mendoza as listed in the seed table. The account still has the `profesional` role and the professional navigation/permissions.
+- Follow-up closure work on 2026-06-08 addressed the logout/session-switching issue, the quoted-request UI path to booking, seed consistency for `pro@arreglaya.com`, and dashboard metric placeholders.
+- The quote lifecycle is now available from the request detail flow: received quotes can be accepted/rejected, and accepted quotes can lead into booking creation.
+- The client rating flow remains supported after completed bookings, with automated coverage added around the completed-booking review path.
 
-## Recommended Follow-Ups
+## Follow-Up Closure Status
 
-| Priority | Follow-up | Reason |
-| --- | --- | --- |
-| High | Fix/verify logout with real backend sessions | Current browser session could not switch roles after professional login, which blocks complete manual QA across client/pro/admin. |
-| High | Add or document the UI path from quoted request to booking/payment/review | The backend supports the lifecycle, but the browser pass required HTTP calls after submitting a pending quote. |
-| Medium | Normalize seed data for `pro@arreglaya.com` | Professional role works, but the displayed full name does not match documented seed expectations. |
-| Medium | Add an automated smoke that creates completed booking and review in isolated test data | Protects the newly requested client rating flow from regressions. |
+| Original Priority | Follow-up | Status | Evidence |
+| --- | --- | --- | --- |
+| High | Fix/verify logout with real backend sessions | Closed | `fix/qa-logout-session` clears the local authenticated session even if backend logout returns an error, allowing role switching in the browser. |
+| High | Add or document the UI path from quoted request to booking/payment/review | Closed | `feature/qa-booking-from-quotes` added received quotes to the service request detail page and booking creation from accepted/available quote context. `feature/quote-accept-reject` added backend/frontend quote resolution. |
+| Medium | Normalize seed data for `pro@arreglaya.com` | Closed | `fix/qa-seed-professional-profile` updates the demo professional user/profile on repeated seed runs so the documented Carlos Mendoza account stays consistent. |
+| Medium | Add an automated smoke that creates completed booking and review in isolated test data | Covered by automated tests | Review creation after completed bookings is covered by backend review tests and frontend review flow tests. A full external E2E smoke that provisions isolated data remains optional future hardening, not a functional blocker from this report. |
+
+No functional QA follow-ups remain open from this report after the 2026-06-08 closure branches were merged to `main`.
