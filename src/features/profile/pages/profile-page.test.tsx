@@ -67,7 +67,10 @@ const renderPage = () =>
     </TestProviders>,
   );
 
-const mockAuth = (user: typeof clientUser | typeof professionalUser) => {
+const mockAuth = (
+  user: typeof clientUser | typeof professionalUser,
+  overrides: Partial<ReturnType<typeof useAuth>> = {},
+) => {
   useAuthMock.mockReturnValue({
     user,
     accessToken: 'token',
@@ -78,6 +81,7 @@ const mockAuth = (user: typeof clientUser | typeof professionalUser) => {
     register: vi.fn(),
     logout: vi.fn(),
     updateUser: vi.fn(),
+    ...overrides,
   });
 };
 
@@ -190,5 +194,18 @@ describe('ProfilePage', () => {
       'src',
       'https://example.com/trabajo.jpg',
     );
+  });
+
+  it('permite cerrar sesion desde la vista mobile del perfil', async () => {
+    const logout = vi.fn().mockResolvedValue(undefined);
+    mockAuth(clientUser, { logout });
+    profileServiceMock.me.mockResolvedValue(clientUser);
+
+    renderPage();
+
+    await screen.findByDisplayValue('Lucia Benitez');
+    fireEvent.click(screen.getByRole('button', { name: 'Cerrar sesion' }));
+
+    expect(logout).toHaveBeenCalledTimes(1);
   });
 });

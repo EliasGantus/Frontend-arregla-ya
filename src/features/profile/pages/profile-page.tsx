@@ -70,7 +70,7 @@ const workPhotoList = (value: string | undefined) =>
     .slice(0, 4);
 
 export const ProfilePage = () => {
-  const { updateUser, user } = useAuth();
+  const { logout, updateUser, user } = useAuth();
   const [savedSettings, setSavedSettings] = useState<ProfileFormValues>(() =>
     defaultProfileSettings(user),
   );
@@ -261,6 +261,14 @@ export const ProfilePage = () => {
         >
           Editar perfil
         </a>
+        <Button
+          aria-label="Cerrar sesion"
+          className="mt-3 w-full md:hidden"
+          variant="ghost"
+          onClick={() => void logout()}
+        >
+          Cerrar sesion
+        </Button>
       </Card>
 
       {user?.role === 'profesional' ? (
