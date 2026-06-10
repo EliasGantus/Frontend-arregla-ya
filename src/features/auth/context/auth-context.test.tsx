@@ -1,6 +1,22 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, waitFor } from '@testing-library/react';
+import type { ReactNode } from 'react';
 
 import { AuthProvider, useAuth } from '@/features/auth/context/auth-context';
+
+const createTestQueryClient = () =>
+  new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+      },
+    },
+  });
+
+const renderWithQueryClient = (ui: ReactNode, queryClient = createTestQueryClient()) => ({
+  queryClient,
+  ...render(<QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>),
+});
 
 const Probe = () => {
   const auth = useAuth();
@@ -54,7 +70,7 @@ describe('AuthProvider', () => {
       ),
     );
 
-    const { getByRole } = render(
+    const { getByRole } = renderWithQueryClient(
       <AuthProvider>
         <Probe />
       </AuthProvider>,
@@ -91,7 +107,7 @@ describe('AuthProvider', () => {
       ),
     );
 
-    const { getByRole } = render(
+    const { getByRole } = renderWithQueryClient(
       <AuthProvider>
         <Probe />
       </AuthProvider>,
@@ -105,5 +121,50 @@ describe('AuthProvider', () => {
     await waitFor(() =>
       expect(getByRole('button', { name: 'sin-sesion' })).toBeInTheDocument(),
     );
+  });
+
+  it('limpia la cache privada al cerrar sesion', async () => {
+    window.localStorage.setItem(
+      'arreglaya.session',
+      JSON.stringify({
+        accessToken: 'token',
+        refreshToken: 'refresh',
+        user: {
+          id: '1',
+          email: 'cliente@arreglaya.com',
+          fullName: 'Cliente Demo',
+          role: 'cliente',
+        },
+      }),
+    );
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        new Response(null, {
+          status: 204,
+        }),
+      ),
+    );
+
+    const queryClient = createTestQueryClient();
+    queryClient.setQueryData(['profile', 'me'], {
+      id: '1',
+      email: 'cliente@arreglaya.com',
+      fullName: 'Cliente Demo',
+      role: 'cliente',
+    });
+    queryClient.setQueryData(['bookings'], [{ id: 'booking-1' }]);
+
+    const { getByRole } = renderWithQueryClient(
+      <AuthProvider>
+        <Probe />
+      </AuthProvider>,
+      queryClient,
+    );
+
+    fireEvent.click(getByRole('button', { name: 'cerrar' }));
+
+    await waitFor(() => expect(queryClient.getQueryData(['profile', 'me'])).toBeUndefined());
+    expect(queryClient.getQueryData(['bookings'])).toBeUndefined();
   });
 });

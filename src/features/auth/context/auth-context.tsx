@@ -1,11 +1,13 @@
 import {
   createContext,
   startTransition,
+  useCallback,
   useContext,
   useEffect,
   useState,
   type PropsWithChildren,
 } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 
 import { authService } from '@/features/auth/services/auth-service';
 import { configureHttpClient } from '@/shared/api/http-client';
@@ -33,22 +35,28 @@ const toState = (session: SessionPayload | null) => ({
 });
 
 export const AuthProvider = ({ children }: PropsWithChildren) => {
+  const queryClient = useQueryClient();
   const [session, setSession] = useState(() => toState(sessionStorageManager.load()));
   const [isBootstrapping, setIsBootstrapping] = useState(true);
 
-  const persistSession = (payload: SessionPayload) => {
+  const persistSession = useCallback((payload: SessionPayload) => {
+    if (session.user && session.user.id !== payload.user.id) {
+      queryClient.clear();
+    }
+
     sessionStorageManager.save(payload);
     startTransition(() => {
       setSession(toState(payload));
     });
-  };
+  }, [queryClient, session.user]);
 
-  const clearSession = () => {
+  const clearSession = useCallback(() => {
+    queryClient.clear();
     sessionStorageManager.clear();
     startTransition(() => {
       setSession(toState(null));
     });
-  };
+  }, [queryClient]);
 
   useEffect(() => {
     configureHttpClient({
@@ -78,7 +86,7 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
       onUnauthorized: clearSession,
     });
     setIsBootstrapping(false);
-  }, [session.accessToken, session.refreshToken, session.user]);
+  }, [clearSession, persistSession, session.accessToken, session.refreshToken, session.user]);
 
   const value: AuthContextValue = {
     user: session.user,
