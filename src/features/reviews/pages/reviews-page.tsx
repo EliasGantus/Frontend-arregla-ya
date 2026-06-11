@@ -15,6 +15,7 @@ import { Button } from '@/shared/ui/button';
 import { Card } from '@/shared/ui/card';
 import { Select } from '@/shared/ui/select';
 import { StatusPanel } from '@/shared/ui/status-panel';
+import { SuccessState } from '@/shared/ui/success-state';
 import { Textarea } from '@/shared/ui/textarea';
 
 const isReviewable = (booking: Booking) => booking.status === 'completed';
@@ -203,34 +204,12 @@ export const ReviewsPage = () => {
       ) : null}
 
       {visibleReview ? (
-        <Card className="border border-emerald-200 bg-emerald-50 shadow-emerald-100/70">
-          <p className="text-sm font-semibold text-emerald-800">
-            Resena publicada. Este servicio ya no puede volver a calificarse.
-          </p>
-          <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="font-bold text-emerald-950">
-                {visibleReview.rating}/5 estrellas
-              </p>
-              {visibleReview.comment ? (
-                <p className="mt-1 text-sm text-emerald-700">
-                  {visibleReview.comment}
-                </p>
-              ) : null}
-            </div>
-            <Button
-              className="w-full sm:w-auto"
-              variant="secondary"
-              onClick={() => {
-                void navigate(
-                  `/app/profesionales/${visibleReview.professionalId}`,
-                );
-              }}
-            >
-              Ver perfil del profesional
-            </Button>
-          </div>
-        </Card>
+        <SuccessState
+          title="Gracias por calificar el servicio"
+          description="Tu opinion ayuda a otros clientes y mejora la calidad de la comunidad ArreglaYa."
+          actionLabel="Volver a reservas"
+          onAction={() => void navigate('/app/reservas')}
+        />
       ) : null}
 
       {!reviewableBookings.length && !bookingsQuery.isLoading ? (

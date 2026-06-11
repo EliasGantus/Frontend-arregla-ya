@@ -96,8 +96,13 @@ describe('PaymentsPage', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: 'Confirmar pago' }));
 
-    expect(await screen.findByText('Pago procesado exitosamente. Recibiras el comprobante por email.')).toBeInTheDocument();
-    expect(screen.getByText('AY-2026-PAYMENT1')).toBeInTheDocument();
+    expect(
+      await screen.findByText('Pago procesado exitosamente.'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Volver a reservas' }),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/AY-2026-PAYMENT1/)).toBeInTheDocument();
     expect(paymentsServiceMock.createForBooking.mock.calls[0]?.[0]).toBe('booking-1');
     expect(paymentsServiceMock.createForBooking.mock.calls[0]?.[1]).toMatchObject({
       amountCents: 8500000,

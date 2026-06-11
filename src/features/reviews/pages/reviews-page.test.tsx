@@ -109,9 +109,10 @@ describe('ReviewsPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Enviar resena' }));
 
     expect(
-      await screen.findByText(
-        'Resena publicada. Este servicio ya no puede volver a calificarse.',
-      ),
+      await screen.findByText('Gracias por calificar el servicio'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Volver a reservas' }),
     ).toBeInTheDocument();
     expect(reviewsServiceMock.create.mock.calls[0]?.[0]).toEqual({
       bookingId: 'booking-1',
@@ -127,7 +128,9 @@ describe('ReviewsPage', () => {
     fireEvent.click(screen.getByRole('radio', { name: '4 estrellas' }));
     fireEvent.click(screen.getByRole('button', { name: 'Enviar resena' }));
 
-    expect(await screen.findByText('4/5 estrellas')).toBeInTheDocument();
+    expect(
+      await screen.findByText('Gracias por calificar el servicio'),
+    ).toBeInTheDocument();
     expect(reviewsServiceMock.create.mock.calls[0]?.[0]).toMatchObject({
       bookingId: 'booking-1',
       rating: 4,
@@ -151,9 +154,7 @@ describe('ReviewsPage', () => {
     renderPage();
 
     expect(
-      await screen.findByText(
-        'Resena publicada. Este servicio ya no puede volver a calificarse.',
-      ),
+      await screen.findByText('Gracias por calificar el servicio'),
     ).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: 'Enviar resena' }),
