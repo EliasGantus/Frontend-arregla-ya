@@ -137,6 +137,14 @@ describe('ProfessionalsPage', () => {
         city: 'Buenos Aires',
         zone: 'Palermo',
         photos: [],
+        statusLabel: 'Esperando cotizaciones',
+        statusDescription: 'Tu solicitud esta publicada y disponible para profesionales.',
+        availableActions: [],
+        nextStep: {
+          action: null,
+          label: 'Esperar propuestas',
+          description: 'Te avisaremos cuando llegue una cotizacion.',
+        },
         createdAt: '2026-05-28T12:00:00.000Z',
       },
     ]);
@@ -150,6 +158,16 @@ describe('ProfessionalsPage', () => {
       professionalName: 'Ana Ruiz',
       scheduledAt: '2026-05-30T13:30:00.000Z',
       status: 'pending',
+      statusLabel: 'Pendiente de confirmacion',
+      statusDescription: 'La reserva espera confirmacion del profesional.',
+      availableActions: ['confirm_booking'],
+      nextStep: {
+        action: 'confirm_booking',
+        label: 'Confirmar reserva',
+        description: 'El profesional debe confirmar el turno.',
+      },
+      hasPayment: false,
+      hasReview: false,
       notes: 'Revisar perdida bajo mesada',
       createdAt: '2026-05-28T12:30:00.000Z',
     });

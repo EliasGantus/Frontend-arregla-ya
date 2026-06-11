@@ -86,6 +86,16 @@ describe('BookingsPage', () => {
       professionalName: 'Ana Ruiz',
       scheduledAt: '2026-05-30T13:30:00.000Z',
       status: 'cancelled',
+      statusLabel: 'Cancelada',
+      statusDescription: 'Esta reserva fue cancelada.',
+      availableActions: [],
+      nextStep: {
+        action: null,
+        label: 'Reserva cerrada',
+        description: 'No hay acciones pendientes.',
+      },
+      hasPayment: false,
+      hasReview: false,
       notes: 'Revisar perdida bajo mesada',
       createdAt: '2026-05-28T12:30:00.000Z',
     });

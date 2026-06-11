@@ -40,6 +40,16 @@ const completedBooking = {
   professionalName: 'Ana Ruiz',
   scheduledAt: '2026-05-30T13:30:00.000Z',
   status: 'completed' as const,
+  statusLabel: 'Trabajo completado',
+  statusDescription: 'El trabajo fue finalizado por el profesional.',
+  availableActions: ['review' as const],
+  nextStep: {
+    action: 'review' as const,
+    label: 'Calificar servicio',
+    description: 'Deja tu resena para cerrar el flujo.',
+  },
+  hasPayment: true,
+  hasReview: false,
   notes: 'Trabajo terminado',
   createdAt: '2026-05-28T12:30:00.000Z',
 };

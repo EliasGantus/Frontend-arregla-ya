@@ -101,6 +101,15 @@ describe('EmergenciesPage', () => {
         city: 'Buenos Aires',
         zone: 'Palermo',
         photos: [],
+        statusLabel: 'Reserva en curso',
+        statusDescription: 'Ya hay un profesional asignado a esta solicitud.',
+        availableActions: [],
+        nextStep: {
+          action: null,
+          label: 'Seguir reserva',
+          description: 'Revisa el estado desde tus reservas.',
+          path: '/app/reservas',
+        },
         createdAt: '2026-05-28T12:00:00.000Z',
       },
       booking: {
@@ -113,6 +122,16 @@ describe('EmergenciesPage', () => {
         professionalName: 'Ana Ruiz',
         scheduledAt: '2026-05-28T12:00:00.000Z',
         status: 'pending',
+        statusLabel: 'Pendiente de confirmacion',
+        statusDescription: 'La reserva espera confirmacion del profesional.',
+        availableActions: ['confirm_booking'],
+        nextStep: {
+          action: 'confirm_booking',
+          label: 'Confirmar reserva',
+          description: 'El profesional debe confirmar el turno.',
+        },
+        hasPayment: false,
+        hasReview: false,
         createdAt: '2026-05-28T12:00:00.000Z',
       },
     });
