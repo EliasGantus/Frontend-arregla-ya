@@ -91,6 +91,14 @@ describe('ServiceRequestDetailPage', () => {
         title: 'Arreglo de canilla',
         description: 'Pierde agua bajo mesada',
         status: 'quoted',
+        statusLabel: 'Cotizaciones recibidas',
+        statusDescription: 'Revisa las propuestas y elige con quien avanzar.',
+        availableActions: ['accept_quote'],
+        nextStep: {
+          action: 'accept_quote',
+          label: 'Comparar cotizaciones',
+          description: 'Acepta una propuesta para coordinar fecha y horario.',
+        },
         category: { id: 'cat-plom', name: 'Plomeria', slug: 'plomeria' },
         city: 'Buenos Aires',
         zone: 'Palermo',
@@ -134,6 +142,16 @@ describe('ServiceRequestDetailPage', () => {
       professionalName: 'Ana Ruiz',
       scheduledAt: '2026-06-14T13:30:00.000Z',
       status: 'pending',
+      statusLabel: 'Pendiente de confirmacion',
+      statusDescription: 'La reserva espera confirmacion del profesional.',
+      availableActions: ['confirm_booking'],
+      nextStep: {
+        action: 'confirm_booking',
+        label: 'Confirmar reserva',
+        description: 'El profesional debe confirmar el turno.',
+      },
+      hasPayment: false,
+      hasReview: false,
       notes: 'Coordinar acceso por porteria',
       createdAt: '2026-05-28T14:00:00.000Z',
     });
@@ -146,7 +164,12 @@ describe('ServiceRequestDetailPage', () => {
   it('permite reservar una cotizacion recibida desde el detalle de solicitud', async () => {
     renderPage();
 
-    expect(await screen.findByText('Cotizaciones recibidas')).toBeInTheDocument();
+    expect(await screen.findAllByText('Cotizaciones recibidas')).not.toHaveLength(0);
+    expect(await screen.findByText('Comparar cotizaciones')).toBeInTheDocument();
+    expect(
+      screen.getByText('Acepta una propuesta para coordinar fecha y horario.'),
+    ).toBeInTheDocument();
+    expect(screen.getByText('Reserva')).toBeInTheDocument();
     expect(await screen.findByText('Ana Ruiz')).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText('Fecha tentativa'), {
       target: { value: '2026-06-14' },

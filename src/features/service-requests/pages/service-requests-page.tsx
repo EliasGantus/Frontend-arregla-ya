@@ -24,9 +24,12 @@ import {
 import { Badge } from '@/shared/ui/badge';
 import { Button } from '@/shared/ui/button';
 import { Card } from '@/shared/ui/card';
+import { FlowProgress } from '@/shared/ui/flow-progress';
 import { Input } from '@/shared/ui/input';
+import { NextActionPanel } from '@/shared/ui/next-action-panel';
 import { Select } from '@/shared/ui/select';
 import { StatusPanel } from '@/shared/ui/status-panel';
+import { StatusChip } from '@/shared/ui/status-chip';
 
 export const ServiceRequestsPage = () => <ServiceRequestsContent />;
 
@@ -85,6 +88,47 @@ const requestProgress: Record<ServiceRequestStatus, string> = {
   assigned: 'Profesional asignado',
   completed: 'Trabajo completado',
   cancelled: 'Solicitud cancelada',
+};
+
+const requestFlowSteps = (status: ServiceRequest['status']) => {
+  const currentStep =
+    status === 'completed'
+      ? 'done'
+      : status === 'assigned'
+        ? 'booking'
+        : 'quote';
+
+  return [
+    {
+      key: 'request',
+      label: 'Solicitud',
+      description: 'Pedido publicado',
+      state: 'done' as const,
+    },
+    {
+      key: 'quote',
+      label: 'Cotizacion',
+      description: 'Comparar propuestas',
+      state: currentStep === 'quote' ? ('current' as const) : ('done' as const),
+    },
+    {
+      key: 'booking',
+      label: 'Reserva',
+      description: 'Coordinar turno',
+      state:
+        currentStep === 'booking'
+          ? ('current' as const)
+          : currentStep === 'done'
+            ? ('done' as const)
+            : ('upcoming' as const),
+    },
+    {
+      key: 'done',
+      label: 'Cierre',
+      description: 'Pago y calificacion',
+      state: currentStep === 'done' ? ('current' as const) : ('upcoming' as const),
+    },
+  ];
 };
 
 const ServiceRequestsContent = () => {
@@ -635,26 +679,21 @@ const ServiceRequestDetailContent = () => {
         Volver
       </Link>
 
-      <Card className="rounded-[28px] !bg-ink p-5 text-white shadow-lg shadow-slate-300/70 md:rounded-3xl md:p-6">
-        <div className="flex items-start justify-between gap-4">
-          <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-accent-200">
-              Detalle solicitud
-            </p>
-            <h1 className="mt-2 text-2xl font-black leading-tight md:text-3xl">
-              {request.title}
-            </h1>
-            <p className="mt-3 text-sm leading-6 text-slate-200">
-              {request.description}
-            </p>
-          </div>
-          <span
-            className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${statusTone[request.status]}`}
-          >
-            {statusCopy[request.status]}
-          </span>
-        </div>
-      </Card>
+      <NextActionPanel
+        title={request.title}
+        description={request.statusDescription ?? request.description}
+        status={request.status}
+        statusLabel={request.statusLabel ?? statusCopy[request.status]}
+        nextStep={
+          request.nextStep ?? {
+            action: null,
+            label: requestProgress[request.status],
+            description: 'Revisa el detalle para ver acciones disponibles.',
+          }
+        }
+      />
+
+      <FlowProgress steps={requestFlowSteps(request.status)} />
 
       <div className="grid gap-4 md:grid-cols-[1fr_0.8fr]">
         <Card className="rounded-[28px] bg-white p-4 shadow-lg shadow-slate-200/70 md:rounded-3xl md:p-6">
@@ -811,7 +850,7 @@ const ServiceRequestDetailContent = () => {
                       {quote.professionalName}
                     </h3>
                   </div>
-                  <Badge>{quoteStatusCopy[quote.status]}</Badge>
+                  <StatusChip label={quoteStatusCopy[quote.status]} status={quote.status} />
                 </div>
 
                 <div className="mt-4 rounded-2xl bg-slate-50 px-4 py-3">
