@@ -139,6 +139,19 @@ const getInitials = (name: string | undefined) =>
     .join('')
     .toUpperCase();
 
+const getMobileTitle = (pathname: string, fallback: string) => {
+  const matchedPath = Object.keys(mobileLabelByPath)
+    .filter((path) =>
+      path === '/app'
+        ? pathname === path
+        : pathname === path || pathname.startsWith(`${path}/`),
+    )
+    .sort((current, next) => next.length - current.length)
+    .at(0);
+
+  return mobileLabelByPath[matchedPath ?? ''] ?? fallback;
+};
+
 export const AppShell = () => {
   const { logout, user } = useAuth();
   const location = useLocation();
@@ -172,9 +185,10 @@ export const AppShell = () => {
               </div>
               <div className="min-w-0">
                 <p className="text-base font-black leading-tight">
-                  {mobileLabelByPath[activeItem?.to ?? '/app'] ??
-                    activeItem?.label ??
-                    'Inicio'}
+                  {getMobileTitle(
+                    location.pathname,
+                    activeItem?.label ?? 'Inicio',
+                  )}
                 </p>
                 <p className="truncate text-xs text-slate-300">
                   {user?.fullName}
@@ -188,7 +202,7 @@ export const AppShell = () => {
         </header>
       </div>
 
-      <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-4 px-3 pb-24 pt-4 sm:px-4 md:flex-row md:gap-6 md:px-6 md:py-4">
+      <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-4 px-3 pb-28 pt-3 sm:px-4 md:flex-row md:gap-6 md:px-6 md:py-4">
         <Card className="hidden md:sticky md:top-6 md:block md:h-[calc(100vh-3rem)] md:w-80 md:shrink-0 md:self-start">
           <div className="rounded-3xl bg-slate-950 p-4 text-white sm:p-5">
             <p className="font-display text-2xl font-black tracking-tight sm:text-3xl">
@@ -281,7 +295,7 @@ export const AppShell = () => {
 
       <nav
         aria-label="Navegacion principal mobile"
-        className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white/95 px-4 pb-3 pt-2 shadow-2xl shadow-slate-900/15 backdrop-blur md:hidden"
+        className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white/95 px-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-2 shadow-2xl shadow-slate-900/15 backdrop-blur md:hidden"
       >
         <div
           className={`mx-auto grid max-w-md gap-2 ${
