@@ -615,6 +615,8 @@ const ServiceRequestDetailContent = () => {
   const quotes = quotesQuery.data ?? [];
   const canAcceptQuotes =
     request?.availableActions?.includes('accept_quote') ?? false;
+  const canBookAcceptedQuote =
+    request?.status === 'quoted' || request?.status === 'assigned';
   const canSubmitBooking =
     Boolean(scheduledDate && scheduledTime) && !bookingMutation.isPending;
 
@@ -899,7 +901,7 @@ const ServiceRequestDetailContent = () => {
                   </div>
                 ) : null}
 
-                {quote.status === 'accepted' ? (
+                {quote.status === 'accepted' && canBookAcceptedQuote ? (
                   <Button
                     className="mt-3 w-full sm:w-auto"
                     disabled={!canSubmitBooking}

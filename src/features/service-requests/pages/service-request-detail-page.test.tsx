@@ -255,6 +255,49 @@ describe('ServiceRequestDetailPage', () => {
     ).not.toBeInTheDocument();
   });
 
+  it('no permite reservar una cotizacion aceptada de una solicitud completada', async () => {
+    serviceRequestsServiceMock.list.mockResolvedValue([
+      {
+        id: 'request-1',
+        title: 'Arreglo de canilla',
+        description: 'Pierde agua bajo mesada',
+        status: 'completed',
+        statusLabel: 'Trabajo completado',
+        statusDescription: 'El trabajo fue marcado como finalizado.',
+        availableActions: ['review'],
+        nextStep: {
+          action: 'review',
+          label: 'Calificar servicio',
+          description: 'Comparte tu experiencia con el profesional.',
+        },
+        category: { id: 'cat-plom', name: 'Plomeria', slug: 'plomeria' },
+        city: 'Buenos Aires',
+        zone: 'Palermo',
+        photos: [],
+        createdAt: '2026-05-28T12:00:00.000Z',
+      },
+    ]);
+    quotesServiceMock.listForRequest.mockResolvedValue([
+      {
+        id: 'quote-1',
+        serviceRequestId: 'request-1',
+        serviceRequestTitle: 'Arreglo de canilla',
+        professionalId: 'pro-1',
+        professionalName: 'Ana Ruiz',
+        amount: '85000',
+        status: 'accepted',
+        message: 'Puedo resolverlo durante la tarde.',
+        createdAt: '2026-05-28T13:00:00.000Z',
+      },
+    ]);
+    renderPage();
+
+    expect(await screen.findByText('Ana Ruiz')).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Reservar con Ana Ruiz' }),
+    ).not.toBeInTheDocument();
+  });
+
   it('permite aceptar una cotizacion recibida', async () => {
     renderPage();
 
