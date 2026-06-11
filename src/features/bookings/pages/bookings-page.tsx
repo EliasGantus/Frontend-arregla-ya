@@ -5,10 +5,11 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/features/auth/context/auth-context';
 import { bookingsService } from '@/features/bookings/services/bookings-service';
 import { ApiError } from '@/shared/api/api-error';
-import type { Booking, BookingStatus } from '@/shared/types/api';
+import type { AuthUser, Booking, BookingStatus } from '@/shared/types/api';
 import { Badge } from '@/shared/ui/badge';
 import { Button } from '@/shared/ui/button';
 import { Card } from '@/shared/ui/card';
+import { StatusChip } from '@/shared/ui/status-chip';
 import { StatusPanel } from '@/shared/ui/status-panel';
 
 const statusCopy: Record<BookingStatus, string> = {
@@ -16,13 +17,6 @@ const statusCopy: Record<BookingStatus, string> = {
   confirmed: 'Confirmado',
   completed: 'Completado',
   cancelled: 'Cancelado',
-};
-
-const statusTone: Record<BookingStatus, string> = {
-  pending: 'bg-accent-50 text-accent-700',
-  confirmed: 'bg-brand-50 text-brand-700',
-  completed: 'bg-emerald-50 text-emerald-700',
-  cancelled: 'bg-red-50 text-red-700',
 };
 
 const formatDateTime = (value: string) => {
@@ -40,6 +34,10 @@ const formatDateTime = (value: string) => {
 
 const statusCount = (bookings: Booking[], status: BookingStatus) =>
   bookings.filter((booking) => booking.status === status).length;
+
+const canComplete = (booking: Booking, role: AuthUser['role'] | undefined) =>
+  booking.availableActions?.includes('complete_work') &&
+  (role === 'profesional' || role === 'admin');
 
 export const BookingsPage = () => {
   const { user } = useAuth();
@@ -62,7 +60,9 @@ export const BookingsPage = () => {
       setNotice(
         booking.status === 'confirmed'
           ? 'Reserva confirmada. El cliente recibira una notificacion de turno confirmado.'
-          : 'Reserva cancelada. El profesional recibira una notificacion y el turno queda libre.',
+          : booking.status === 'completed'
+            ? 'Trabajo marcado como terminado. El cliente ya puede calificar el servicio.'
+            : 'Reserva cancelada. El profesional recibira una notificacion y el turno queda libre.',
       );
       await queryClient.invalidateQueries({ queryKey: ['bookings'] });
     },
@@ -223,11 +223,10 @@ export const BookingsPage = () => {
                   {booking.serviceRequestTitle}
                 </h3>
               </div>
-              <span
-                className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${statusTone[booking.status]}`}
-              >
-                {statusCopy[booking.status]}
-              </span>
+              <StatusChip
+                label={booking.statusLabel ?? statusCopy[booking.status]}
+                status={booking.status}
+              />
             </div>
 
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -259,6 +258,20 @@ export const BookingsPage = () => {
               ) : null}
             </div>
 
+            <div className="mt-4 rounded-2xl bg-slate-50 px-4 py-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
+                Proximo paso
+              </p>
+              <p className="mt-1 text-sm font-bold text-slate-950">
+                {booking.nextStep?.label ?? statusCopy[booking.status]}
+              </p>
+              <p className="mt-1 text-sm leading-6 text-slate-600">
+                {booking.nextStep?.description ??
+                  booking.statusDescription ??
+                  'Revisa las acciones disponibles.'}
+              </p>
+            </div>
+
             <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
               {canConfirm(booking) ? (
                 <Button
@@ -288,6 +301,21 @@ export const BookingsPage = () => {
                   variant="ghost"
                 >
                   Cancelar reserva
+                </Button>
+              ) : null}
+              {canComplete(booking, user?.role) ? (
+                <Button
+                  className="w-full sm:w-auto"
+                  disabled={updateMutation.isPending}
+                  onClick={() =>
+                    updateMutation.mutate({
+                      bookingId: booking.id,
+                      status: 'completed',
+                    })
+                  }
+                  variant="secondary"
+                >
+                  Marcar trabajo como terminado
                 </Button>
               ) : null}
               {canPay(booking) ? (
