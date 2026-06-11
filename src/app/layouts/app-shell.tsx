@@ -19,6 +19,7 @@ const mobileLabelByPath: Record<string, string> = {
   '/app/perfil': 'Perfil',
   '/app/solicitudes': 'Solicitudes',
   '/app/reservas': 'Reservas',
+  '/app/calificaciones': 'Calificaciones',
   '/app/cotizaciones': 'Cotizaciones',
   '/app/admin': 'Admin',
 };

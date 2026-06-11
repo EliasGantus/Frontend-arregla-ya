@@ -105,4 +105,46 @@ describe('AppShell', () => {
       within(mobileNav).queryByRole('link', { name: 'Cotizaciones' }),
     ).not.toBeInTheDocument();
   });
+
+  it('muestra el titulo mobile de calificaciones sin caer en Panel', () => {
+    useAuthMock.mockReturnValue({
+      user: {
+        id: '1',
+        email: 'cliente@arreglaya.com',
+        fullName: 'Cliente Demo',
+        role: 'cliente',
+      },
+      accessToken: 'token',
+      refreshToken: 'refresh',
+      isAuthenticated: true,
+      isBootstrapping: false,
+      login: vi.fn(),
+      register: vi.fn(),
+      logout: vi.fn(),
+      updateUser: vi.fn(),
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/app/calificaciones']}>
+        <Routes>
+          <Route path="/app" element={<AppShell />}>
+            <Route path="calificaciones" element={<p>Reviews</p>} />
+          </Route>
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    const mobileHeader = screen
+      .getAllByRole('banner')
+      .find((header) => within(header).queryByText('Cliente Demo'));
+
+    if (!mobileHeader) {
+      throw new Error('No se encontro el header mobile');
+    }
+
+    expect(
+      within(mobileHeader).getByText('Calificaciones'),
+    ).toBeInTheDocument();
+    expect(within(mobileHeader).queryByText('Panel')).not.toBeInTheDocument();
+  });
 });
