@@ -613,6 +613,8 @@ const ServiceRequestDetailContent = () => {
     },
   });
   const quotes = quotesQuery.data ?? [];
+  const canAcceptQuotes =
+    request?.availableActions?.includes('accept_quote') ?? false;
   const canSubmitBooking =
     Boolean(scheduledDate && scheduledTime) && !bookingMutation.isPending;
 
@@ -866,7 +868,7 @@ const ServiceRequestDetailContent = () => {
                   {quote.message}
                 </p>
 
-                {quote.status === 'pending' ? (
+                {quote.status === 'pending' && canAcceptQuotes ? (
                   <div className="mt-4 grid gap-2 sm:grid-cols-2">
                     <Button
                       aria-label={`Aceptar cotizacion de ${quote.professionalName}`}

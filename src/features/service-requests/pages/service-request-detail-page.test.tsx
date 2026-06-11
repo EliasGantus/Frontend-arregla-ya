@@ -218,6 +218,43 @@ describe('ServiceRequestDetailPage', () => {
     ).not.toBeInTheDocument();
   });
 
+  it('oculta acciones de cotizacion cuando la solicitud no permite aceptarlas', async () => {
+    serviceRequestsServiceMock.list.mockResolvedValue([
+      {
+        id: 'request-1',
+        title: 'Arreglo de canilla',
+        description: 'Pierde agua bajo mesada',
+        status: 'cancelled',
+        statusLabel: 'Cancelada',
+        statusDescription: 'Esta solicitud fue cancelada.',
+        availableActions: [],
+        nextStep: {
+          action: null,
+          label: 'Solicitud cerrada',
+          description: 'No hay acciones pendientes.',
+        },
+        category: { id: 'cat-plom', name: 'Plomeria', slug: 'plomeria' },
+        city: 'Buenos Aires',
+        zone: 'Palermo',
+        photos: [],
+        createdAt: '2026-05-28T12:00:00.000Z',
+      },
+    ]);
+    renderPage();
+
+    expect(await screen.findByText('Ana Ruiz')).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', {
+        name: 'Aceptar cotizacion de Ana Ruiz',
+      }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', {
+        name: 'Rechazar cotizacion de Ana Ruiz',
+      }),
+    ).not.toBeInTheDocument();
+  });
+
   it('permite aceptar una cotizacion recibida', async () => {
     renderPage();
 
