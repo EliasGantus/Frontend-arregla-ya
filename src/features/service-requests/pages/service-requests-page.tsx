@@ -897,16 +897,18 @@ const ServiceRequestDetailContent = () => {
                   </div>
                 ) : null}
 
-                <Button
-                  className="mt-3 w-full sm:w-auto"
-                  disabled={!canSubmitBooking}
-                  onClick={() => bookingMutation.mutate(quote)}
-                  variant="secondary"
-                >
-                  {bookingMutation.isPending
-                    ? 'Reservando...'
-                    : `Reservar con ${quote.professionalName}`}
-                </Button>
+                {quote.status === 'accepted' ? (
+                  <Button
+                    className="mt-3 w-full sm:w-auto"
+                    disabled={!canSubmitBooking}
+                    onClick={() => bookingMutation.mutate(quote)}
+                    variant="secondary"
+                  >
+                    {bookingMutation.isPending
+                      ? 'Reservando...'
+                      : `Reservar con ${quote.professionalName}`}
+                  </Button>
+                ) : null}
               </Card>
             ))}
           </div>

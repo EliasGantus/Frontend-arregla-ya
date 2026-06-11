@@ -201,4 +201,72 @@ describe('BookingsPage', () => {
     expect(await screen.findByText(/Trabajo marcado como terminado/)).toBeInTheDocument();
     expect(bookingsServiceMock.update.mock.calls[0]).toEqual(['booking-1', { status: 'completed' }]);
   });
+
+  it('oculta acciones de pago y calificacion cuando backend no las habilita', async () => {
+    bookingsServiceMock.list.mockResolvedValue([
+      {
+        id: 'booking-paid',
+        serviceRequestId: 'request-1',
+        serviceRequestTitle: 'Arreglo de canilla',
+        clientId: 'client-1',
+        clientName: 'Cliente Demo',
+        professionalId: 'pro-top',
+        professionalName: 'Ana Ruiz',
+        scheduledAt: '2026-05-30T13:30:00.000Z',
+        status: 'confirmed',
+        statusLabel: 'Reserva confirmada',
+        statusDescription: 'El turno esta confirmado y listo para avanzar.',
+        availableActions: ['complete_work'],
+        nextStep: {
+          action: 'complete_work',
+          label: 'Esperar finalizacion',
+          description: 'El profesional debe marcar el trabajo como terminado.',
+        },
+        hasPayment: true,
+        hasReview: false,
+        notes: 'Pago ya generado',
+        createdAt: '2026-05-28T12:30:00.000Z',
+      },
+      {
+        id: 'booking-reviewed',
+        serviceRequestId: 'request-2',
+        serviceRequestTitle: 'Cambio de termica',
+        clientId: 'client-1',
+        clientName: 'Cliente Demo',
+        professionalId: 'pro-top',
+        professionalName: 'Ana Ruiz',
+        scheduledAt: '2026-05-31T13:30:00.000Z',
+        status: 'completed',
+        statusLabel: 'Trabajo completado',
+        statusDescription: 'El trabajo fue finalizado por el profesional.',
+        availableActions: [],
+        nextStep: {
+          action: null,
+          label: 'Reserva cerrada',
+          description: 'No hay acciones pendientes.',
+        },
+        hasPayment: true,
+        hasReview: true,
+        notes: 'Ya calificado',
+        createdAt: '2026-05-29T12:30:00.000Z',
+      },
+    ]);
+
+    render(
+      <TestProviders>
+        <MemoryRouter>
+          <BookingsPage />
+        </MemoryRouter>
+      </TestProviders>,
+    );
+
+    expect(await screen.findByText('Arreglo de canilla')).toBeInTheDocument();
+    expect(screen.getByText('Cambio de termica')).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Pagar servicio' }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Calificar servicio' }),
+    ).not.toBeInTheDocument();
+  });
 });

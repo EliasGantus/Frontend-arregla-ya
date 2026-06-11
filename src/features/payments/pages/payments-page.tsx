@@ -33,7 +33,7 @@ const toAmountCents = (amount: string) => {
 };
 
 const isPayable = (booking: Booking) =>
-  booking.status === 'confirmed' || booking.status === 'completed';
+  booking.availableActions?.includes('pay');
 
 const methodCopy: Record<PaymentFormValues['method'], string> = {
   mercado_pago_wallet: 'MercadoPago wallet',
@@ -65,12 +65,10 @@ export const PaymentsPage = () => {
   });
   const payableBookings = useMemo(() => {
     const bookings = bookingsQuery.data ?? [];
-    const merged = bookingFromState
-      ? [
-          bookingFromState,
-          ...bookings.filter((booking) => booking.id !== bookingFromState.id),
-        ]
-      : bookings;
+    const merged =
+      bookingFromState && !bookings.some((booking) => booking.id === bookingFromState.id)
+        ? [bookingFromState, ...bookings]
+        : bookings;
 
     return merged.filter(isPayable);
   }, [bookingFromState, bookingsQuery.data]);

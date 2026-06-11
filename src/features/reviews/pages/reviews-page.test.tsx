@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { PropsWithChildren } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 
@@ -170,5 +170,29 @@ describe('ReviewsPage', () => {
       screen.getByRole('button', { name: 'Enviar resena' }),
     ).toBeDisabled();
     expect(reviewsServiceMock.create.mock.calls).toHaveLength(0);
+  });
+
+  it('no ofrece reservas completadas que ya no tienen accion de calificar', async () => {
+    bookingsServiceMock.list.mockResolvedValue([
+      {
+        ...completedBooking,
+        hasReview: true,
+        availableActions: [],
+        nextStep: {
+          action: null,
+          label: 'Reserva cerrada',
+          description: 'No hay acciones pendientes.',
+        },
+      },
+    ]);
+    renderPage();
+
+    await waitFor(() =>
+      expect(
+        screen.queryByRole('option', {
+          name: 'Cambio de termica - Ana Ruiz',
+        }),
+      ).not.toBeInTheDocument(),
+    );
   });
 });

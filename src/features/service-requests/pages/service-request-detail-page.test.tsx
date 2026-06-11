@@ -162,6 +162,19 @@ describe('ServiceRequestDetailPage', () => {
   });
 
   it('permite reservar una cotizacion recibida desde el detalle de solicitud', async () => {
+    quotesServiceMock.listForRequest.mockResolvedValue([
+      {
+        id: 'quote-1',
+        serviceRequestId: 'request-1',
+        serviceRequestTitle: 'Arreglo de canilla',
+        professionalId: 'pro-1',
+        professionalName: 'Ana Ruiz',
+        amount: '85000',
+        status: 'accepted',
+        message: 'Puedo resolverlo durante la tarde.',
+        createdAt: '2026-05-28T13:00:00.000Z',
+      },
+    ]);
     renderPage();
 
     expect(await screen.findAllByText('Cotizaciones recibidas')).not.toHaveLength(0);
@@ -194,6 +207,15 @@ describe('ServiceRequestDetailPage', () => {
       }),
     );
     expect(await screen.findByText('Reservas')).toBeInTheDocument();
+  });
+
+  it('no permite reservar una cotizacion pendiente', async () => {
+    renderPage();
+
+    expect(await screen.findByText('Ana Ruiz')).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Reservar con Ana Ruiz' }),
+    ).not.toBeInTheDocument();
   });
 
   it('permite aceptar una cotizacion recibida', async () => {

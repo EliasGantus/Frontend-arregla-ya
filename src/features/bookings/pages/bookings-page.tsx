@@ -106,10 +106,10 @@ export const BookingsPage = () => {
     booking.status === 'pending' &&
     (user?.role === 'profesional' || user?.role === 'admin');
   const canPay = (booking: Booking) =>
-    (booking.status === 'confirmed' || booking.status === 'completed') &&
+    booking.availableActions?.includes('pay') &&
     (user?.role === 'cliente' || user?.role === 'admin');
   const canReview = (booking: Booking) =>
-    booking.status === 'completed' &&
+    booking.availableActions?.includes('review') &&
     (user?.role === 'cliente' || user?.role === 'admin');
 
   return (

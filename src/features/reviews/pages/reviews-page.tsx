@@ -18,7 +18,8 @@ import { StatusPanel } from '@/shared/ui/status-panel';
 import { SuccessState } from '@/shared/ui/success-state';
 import { Textarea } from '@/shared/ui/textarea';
 
-const isReviewable = (booking: Booking) => booking.status === 'completed';
+const isReviewable = (booking: Booking) =>
+  booking.availableActions?.includes('review');
 
 const formatDateTime = (value: string) =>
   new Intl.DateTimeFormat('es-AR', {
@@ -43,12 +44,10 @@ export const ReviewsPage = () => {
   });
   const reviewableBookings = useMemo(() => {
     const bookings = bookingsQuery.data ?? [];
-    const merged = bookingFromState
-      ? [
-          bookingFromState,
-          ...bookings.filter((booking) => booking.id !== bookingFromState.id),
-        ]
-      : bookings;
+    const merged =
+      bookingFromState && !bookings.some((booking) => booking.id === bookingFromState.id)
+        ? [bookingFromState, ...bookings]
+        : bookings;
 
     return merged.filter(isReviewable);
   }, [bookingFromState, bookingsQuery.data]);

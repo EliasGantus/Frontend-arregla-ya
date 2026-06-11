@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { PropsWithChildren } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 
@@ -33,14 +33,14 @@ const booking = {
   professionalId: 'pro-1',
   professionalName: 'Ana Ruiz',
   scheduledAt: '2026-05-30T13:30:00.000Z',
-  status: 'completed' as const,
-  statusLabel: 'Trabajo completado',
-  statusDescription: 'El trabajo fue finalizado por el profesional.',
-  availableActions: ['review' as const],
+  status: 'confirmed' as const,
+  statusLabel: 'Reserva confirmada',
+  statusDescription: 'El turno esta confirmado y listo para avanzar.',
+  availableActions: ['pay' as const, 'complete_work' as const],
   nextStep: {
-    action: 'review' as const,
-    label: 'Calificar servicio',
-    description: 'Deja tu resena para cerrar el flujo.',
+    action: 'pay' as const,
+    label: 'Pagar servicio',
+    description: 'Completa el pago del servicio.',
   },
   hasPayment: false,
   hasReview: false,
@@ -171,5 +171,29 @@ describe('PaymentsPage', () => {
 
     expect(await screen.findByText(/MercadoPago rechazo la tarjeta/)).toBeInTheDocument();
     expect(screen.getByText(/Intenta con otro metodo de pago/)).toBeInTheDocument();
+  });
+
+  it('no ofrece reservas que ya no tienen accion de pago', async () => {
+    bookingsServiceMock.list.mockResolvedValue([
+      {
+        ...booking,
+        hasPayment: true,
+        availableActions: ['complete_work' as const],
+        nextStep: {
+          action: 'complete_work' as const,
+          label: 'Esperar finalizacion',
+          description: 'El profesional debe marcar el trabajo como terminado.',
+        },
+      },
+    ]);
+    renderPage();
+
+    await waitFor(() =>
+      expect(
+        screen.queryByRole('option', {
+          name: 'Cambio de termica - Ana Ruiz',
+        }),
+      ).not.toBeInTheDocument(),
+    );
   });
 });
