@@ -80,8 +80,15 @@ describe('AppShell', () => {
     );
 
     const mobileNav = screen.getByLabelText('Navegacion principal mobile');
+    const mobileHeader = screen
+      .getAllByRole('banner')
+      .find((header) => within(header).queryByText('Cliente Demo'));
 
-    expect(screen.getAllByText('Solicitudes')).not.toHaveLength(0);
+    if (!mobileHeader) {
+      throw new Error('No se encontro el header mobile');
+    }
+
+    expect(within(mobileHeader).getByText('Solicitudes')).toBeInTheDocument();
     expect(
       within(mobileNav).getAllByRole('link', { name: /Inicio/ }),
     ).not.toHaveLength(0);
