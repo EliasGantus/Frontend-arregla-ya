@@ -97,6 +97,25 @@ const renderSearch = () =>
           <Route path="/app/profesionales" element={<ProfessionalsPage />} />
           <Route path="/app/profesionales/:professionalId" element={<ProfessionalProfilePage />} />
           <Route path="/app/profesionales/:professionalId/reservar" element={<ProfessionalBookingPage />} />
+          <Route path="/app/solicitudes" element={<p>Solicitudes del cliente</p>} />
+        </Routes>
+      </MemoryRouter>
+    </TestProviders>,
+  );
+
+const renderBooking = () =>
+  render(
+    <TestProviders>
+      <MemoryRouter
+        initialEntries={[
+          {
+            pathname: '/app/profesionales/pro-top/reservar',
+            state: { professional: professionals[1] },
+          },
+        ]}
+      >
+        <Routes>
+          <Route path="/app/profesionales/:professionalId/reservar" element={<ProfessionalBookingPage />} />
         </Routes>
       </MemoryRouter>
     </TestProviders>,
@@ -137,6 +156,14 @@ describe('ProfessionalsPage', () => {
         city: 'Buenos Aires',
         zone: 'Palermo',
         photos: [],
+        statusLabel: 'Esperando cotizaciones',
+        statusDescription: 'Tu solicitud esta publicada y disponible para profesionales.',
+        availableActions: [],
+        nextStep: {
+          action: null,
+          label: 'Esperar propuestas',
+          description: 'Te avisaremos cuando llegue una cotizacion.',
+        },
         createdAt: '2026-05-28T12:00:00.000Z',
       },
     ]);
@@ -150,6 +177,16 @@ describe('ProfessionalsPage', () => {
       professionalName: 'Ana Ruiz',
       scheduledAt: '2026-05-30T13:30:00.000Z',
       status: 'pending',
+      statusLabel: 'Pendiente de confirmacion',
+      statusDescription: 'La reserva espera confirmacion del profesional.',
+      availableActions: ['confirm_booking'],
+      nextStep: {
+        action: 'confirm_booking',
+        label: 'Confirmar reserva',
+        description: 'El profesional debe confirmar el turno.',
+      },
+      hasPayment: false,
+      hasReview: false,
       notes: 'Revisar perdida bajo mesada',
       createdAt: '2026-05-28T12:30:00.000Z',
     });
@@ -229,30 +266,25 @@ describe('ProfessionalsPage', () => {
     expect(screen.getByText('Fotos de servicios recientes')).toBeInTheDocument();
     expect(await screen.findByText('Trabajo prolijo y puntual.')).toBeInTheDocument();
     expect(screen.getByText('5/5 estrellas')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Reservar' }));
+    expect(screen.queryByRole('button', { name: 'Reservar' })).not.toBeInTheDocument();
+    fireEvent.click(screen.getAllByRole('button', { name: /Ver solicitudes/ })[0]);
 
-    expect(await screen.findByText('Reserva con Ana Ruiz')).toBeInTheDocument();
-    expect(screen.getByText('Fecha tentativa')).toBeInTheDocument();
-    await screen.findByRole('option', { name: 'Arreglo de canilla - Buenos Aires / Palermo' });
-    fireEvent.change(screen.getByLabelText('Solicitud asociada'), {
-      target: { value: 'request-1' },
-    });
-    fireEvent.change(screen.getByLabelText('Fecha tentativa'), {
-      target: { value: '2026-05-30' },
-    });
-    fireEvent.change(screen.getByLabelText('Horario'), {
-      target: { value: '10:30' },
-    });
-    fireEvent.change(screen.getByLabelText('Detalle del trabajo'), {
-      target: { value: 'Revisar perdida bajo mesada' },
-    });
-    fireEvent.click(screen.getByRole('button', { name: 'Confirmar reserva' }));
+    expect(await screen.findByText('Solicitudes del cliente')).toBeInTheDocument();
+    expect(bookingsServiceMock.create.mock.calls).toHaveLength(0);
+  });
 
-    await screen.findByText('Reserva creada con estado Pendiente. Recibiras una notificacion de confirmacion.');
-    expect(bookingsServiceMock.create.mock.calls[0]?.[0]).toMatchObject({
-      serviceRequestId: 'request-1',
-      professionalId: 'pro-top',
-      notes: 'Revisar perdida bajo mesada',
-    });
+  it('bloquea la reserva directa cuando no hay solicitudes con cotizacion aceptada', async () => {
+    renderBooking();
+
+    expect(
+      await screen.findByText(
+        'Para reservar necesitas aceptar primero una cotizacion desde el detalle de la solicitud.',
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('option', { name: 'Arreglo de canilla - Buenos Aires / Palermo' }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Confirmar reserva' })).toBeDisabled();
+    expect(bookingsServiceMock.create.mock.calls).toHaveLength(0);
   });
 });

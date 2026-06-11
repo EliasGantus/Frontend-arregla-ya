@@ -16,6 +16,29 @@ export interface AuthTokens {
   refreshToken: string;
 }
 
+export type FlowAction =
+  | 'create_quote'
+  | 'accept_quote'
+  | 'book'
+  | 'confirm_booking'
+  | 'pay'
+  | 'complete_work'
+  | 'review';
+
+export interface FlowNextStep {
+  action: FlowAction | null;
+  label: string;
+  description: string;
+  path?: string;
+}
+
+export interface FlowState {
+  statusLabel: string;
+  statusDescription: string;
+  availableActions: FlowAction[];
+  nextStep: FlowNextStep;
+}
+
 export interface SessionPayload extends AuthTokens {
   user: AuthUser;
 }
@@ -81,7 +104,7 @@ export type ServiceRequestStatus =
   | 'completed'
   | 'cancelled';
 
-export interface ServiceRequest {
+export interface ServiceRequest extends FlowState {
   id: string;
   title: string;
   description: string;
@@ -91,6 +114,8 @@ export interface ServiceRequest {
   zone: string;
   budget?: string;
   photos: string[];
+  quoteCount?: number;
+  acceptedQuoteId?: string;
   createdAt: string;
 }
 
@@ -136,7 +161,7 @@ export interface UpdateQuoteInput {
 
 export type BookingStatus = 'pending' | 'confirmed' | 'completed' | 'cancelled';
 
-export interface Booking {
+export interface Booking extends FlowState {
   id: string;
   serviceRequestId: string;
   serviceRequestTitle: string;
@@ -146,6 +171,8 @@ export interface Booking {
   professionalName: string;
   scheduledAt: string;
   status: BookingStatus;
+  hasPayment?: boolean;
+  hasReview?: boolean;
   notes?: string;
   createdAt: string;
 }

@@ -2,7 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 import { bookingsService } from '@/features/bookings/services/bookings-service';
 import { paymentsService } from '@/features/payments/services/payments-service';
@@ -18,6 +18,7 @@ import { Card } from '@/shared/ui/card';
 import { Input } from '@/shared/ui/input';
 import { Select } from '@/shared/ui/select';
 import { StatusPanel } from '@/shared/ui/status-panel';
+import { SuccessState } from '@/shared/ui/success-state';
 
 const formatMoney = (amountCents: number, currency = 'ARS') =>
   new Intl.NumberFormat('es-AR', {
@@ -32,7 +33,7 @@ const toAmountCents = (amount: string) => {
 };
 
 const isPayable = (booking: Booking) =>
-  booking.status === 'confirmed' || booking.status === 'completed';
+  booking.availableActions?.includes('pay');
 
 const methodCopy: Record<PaymentFormValues['method'], string> = {
   mercado_pago_wallet: 'MercadoPago wallet',
@@ -49,6 +50,7 @@ const paymentStatusTone: Record<Payment['status'], string> = {
 
 export const PaymentsPage = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const bookingFromState = (location.state as { booking?: Booking } | null)
     ?.booking;
   const [payment, setPayment] = useState<Payment | null>(null);
@@ -63,12 +65,10 @@ export const PaymentsPage = () => {
   });
   const payableBookings = useMemo(() => {
     const bookings = bookingsQuery.data ?? [];
-    const merged = bookingFromState
-      ? [
-          bookingFromState,
-          ...bookings.filter((booking) => booking.id !== bookingFromState.id),
-        ]
-      : bookings;
+    const merged =
+      bookingFromState && !bookings.some((booking) => booking.id === bookingFromState.id)
+        ? [bookingFromState, ...bookings]
+        : bookings;
 
     return merged.filter(isPayable);
   }, [bookingFromState, bookingsQuery.data]);
@@ -183,38 +183,21 @@ export const PaymentsPage = () => {
       ) : null}
 
       {payment ? (
-        <Card className="rounded-[28px] border border-emerald-200 bg-emerald-50 md:rounded-3xl">
-          <p className="text-sm font-semibold text-emerald-800">
-            {payment.status === 'approved'
-              ? 'Pago procesado exitosamente. Recibiras el comprobante por email.'
-              : 'Pago iniciado en MercadoPago. Completa el checkout para recibir el comprobante.'}
-          </p>
-          <div className="mt-4 grid gap-3 md:grid-cols-3">
-            <div>
-              <p className="text-xs font-semibold uppercase text-emerald-700">
-                Comprobante
-              </p>
-              <p className="mt-1 font-bold text-emerald-950">
-                {payment.receiptNumber ?? payment.id}
-              </p>
-            </div>
-            <div>
-              <p className="text-xs font-semibold uppercase text-emerald-700">
-                Monto
-              </p>
-              <p className="mt-1 font-bold text-emerald-950">
-                {formatMoney(payment.amountCents, payment.currency)}
-              </p>
-            </div>
-            <div>
-              <p className="text-xs font-semibold uppercase text-emerald-700">
-                Profesional
-              </p>
-              <p className="mt-1 font-bold text-emerald-950">
-                {payment.professionalName}
-              </p>
-            </div>
-          </div>
+        <div className="space-y-3">
+          <SuccessState
+            title={
+              payment.status === 'approved'
+                ? 'Pago procesado exitosamente.'
+                : 'Pago iniciado en MercadoPago.'
+            }
+            description={
+              payment.status === 'approved'
+                ? `Comprobante ${payment.receiptNumber ?? payment.id}. Recibiras el detalle por email.`
+                : 'Pago iniciado en MercadoPago. Completa el checkout para recibir el comprobante.'
+            }
+            actionLabel="Volver a reservas"
+            onAction={() => void navigate('/app/reservas')}
+          />
           {payment.checkoutUrl ? (
             <a
               className="mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-2xl bg-accent-500 px-4 py-3 text-center text-sm font-semibold leading-tight text-white shadow-lg shadow-accent-500/30 hover:bg-accent-400 sm:w-auto"
@@ -225,7 +208,7 @@ export const PaymentsPage = () => {
               Abrir MercadoPago
             </a>
           ) : null}
-        </Card>
+        </div>
       ) : null}
 
       <section className="rounded-[28px] bg-white p-4 shadow-lg shadow-slate-200/70 md:rounded-3xl md:p-6">

@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { PropsWithChildren } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 
@@ -33,7 +33,17 @@ const booking = {
   professionalId: 'pro-1',
   professionalName: 'Ana Ruiz',
   scheduledAt: '2026-05-30T13:30:00.000Z',
-  status: 'completed' as const,
+  status: 'confirmed' as const,
+  statusLabel: 'Reserva confirmada',
+  statusDescription: 'El turno esta confirmado y listo para avanzar.',
+  availableActions: ['pay' as const, 'complete_work' as const],
+  nextStep: {
+    action: 'pay' as const,
+    label: 'Pagar servicio',
+    description: 'Completa el pago del servicio.',
+  },
+  hasPayment: false,
+  hasReview: false,
   notes: 'Trabajo terminado',
   createdAt: '2026-05-28T12:30:00.000Z',
 };
@@ -96,13 +106,55 @@ describe('PaymentsPage', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: 'Confirmar pago' }));
 
-    expect(await screen.findByText('Pago procesado exitosamente. Recibiras el comprobante por email.')).toBeInTheDocument();
-    expect(screen.getByText('AY-2026-PAYMENT1')).toBeInTheDocument();
+    expect(
+      await screen.findByText('Pago procesado exitosamente.'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Volver a reservas' }),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/AY-2026-PAYMENT1/)).toBeInTheDocument();
     expect(paymentsServiceMock.createForBooking.mock.calls[0]?.[0]).toBe('booking-1');
     expect(paymentsServiceMock.createForBooking.mock.calls[0]?.[1]).toMatchObject({
       amountCents: 8500000,
       currency: 'ARS',
     });
+  });
+
+  it('muestra estado iniciado cuando MercadoPago requiere checkout', async () => {
+    paymentsServiceMock.createForBooking.mockResolvedValueOnce({
+      id: 'payment-2',
+      bookingId: 'booking-1',
+      serviceRequestId: 'request-1',
+      serviceRequestTitle: 'Cambio de termica',
+      professionalId: 'pro-1',
+      professionalName: 'Ana Ruiz',
+      amountCents: 8500000,
+      currency: 'ARS',
+      status: 'pending',
+      provider: 'mercado_pago',
+      checkoutUrl: 'https://www.mercadopago.com.ar/checkout/payment-2',
+      createdAt: '2026-05-29T12:00:00.000Z',
+    });
+    renderPage();
+
+    await screen.findByText('Cambio de termica');
+    fireEvent.change(screen.getByLabelText('Monto'), {
+      target: { value: '85000' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmar pago' }));
+
+    expect(
+      await screen.findByText('Pago iniciado en MercadoPago.'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Volver a reservas' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: 'Abrir MercadoPago' }),
+    ).toHaveAttribute(
+      'href',
+      'https://www.mercadopago.com.ar/checkout/payment-2',
+    );
   });
 
   it('muestra error descriptivo cuando falla el cobro', async () => {
@@ -119,5 +171,29 @@ describe('PaymentsPage', () => {
 
     expect(await screen.findByText(/MercadoPago rechazo la tarjeta/)).toBeInTheDocument();
     expect(screen.getByText(/Intenta con otro metodo de pago/)).toBeInTheDocument();
+  });
+
+  it('no ofrece reservas que ya no tienen accion de pago', async () => {
+    bookingsServiceMock.list.mockResolvedValue([
+      {
+        ...booking,
+        hasPayment: true,
+        availableActions: ['complete_work' as const],
+        nextStep: {
+          action: 'complete_work' as const,
+          label: 'Esperar finalizacion',
+          description: 'El profesional debe marcar el trabajo como terminado.',
+        },
+      },
+    ]);
+    renderPage();
+
+    await waitFor(() =>
+      expect(
+        screen.queryByRole('option', {
+          name: 'Cambio de termica - Ana Ruiz',
+        }),
+      ).not.toBeInTheDocument(),
+    );
   });
 });

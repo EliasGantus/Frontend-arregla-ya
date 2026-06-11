@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { PropsWithChildren } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 
@@ -40,6 +40,16 @@ const completedBooking = {
   professionalName: 'Ana Ruiz',
   scheduledAt: '2026-05-30T13:30:00.000Z',
   status: 'completed' as const,
+  statusLabel: 'Trabajo completado',
+  statusDescription: 'El trabajo fue finalizado por el profesional.',
+  availableActions: ['review' as const],
+  nextStep: {
+    action: 'review' as const,
+    label: 'Calificar servicio',
+    description: 'Deja tu resena para cerrar el flujo.',
+  },
+  hasPayment: true,
+  hasReview: false,
   notes: 'Trabajo terminado',
   createdAt: '2026-05-28T12:30:00.000Z',
 };
@@ -109,9 +119,10 @@ describe('ReviewsPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Enviar resena' }));
 
     expect(
-      await screen.findByText(
-        'Resena publicada. Este servicio ya no puede volver a calificarse.',
-      ),
+      await screen.findByText('Gracias por calificar el servicio'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Volver a reservas' }),
     ).toBeInTheDocument();
     expect(reviewsServiceMock.create.mock.calls[0]?.[0]).toEqual({
       bookingId: 'booking-1',
@@ -127,7 +138,9 @@ describe('ReviewsPage', () => {
     fireEvent.click(screen.getByRole('radio', { name: '4 estrellas' }));
     fireEvent.click(screen.getByRole('button', { name: 'Enviar resena' }));
 
-    expect(await screen.findByText('4/5 estrellas')).toBeInTheDocument();
+    expect(
+      await screen.findByText('Gracias por calificar el servicio'),
+    ).toBeInTheDocument();
     expect(reviewsServiceMock.create.mock.calls[0]?.[0]).toMatchObject({
       bookingId: 'booking-1',
       rating: 4,
@@ -151,13 +164,35 @@ describe('ReviewsPage', () => {
     renderPage();
 
     expect(
-      await screen.findByText(
-        'Resena publicada. Este servicio ya no puede volver a calificarse.',
-      ),
+      await screen.findByText('Gracias por calificar el servicio'),
     ).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: 'Enviar resena' }),
     ).toBeDisabled();
     expect(reviewsServiceMock.create.mock.calls).toHaveLength(0);
+  });
+
+  it('no ofrece reservas completadas que ya no tienen accion de calificar', async () => {
+    bookingsServiceMock.list.mockResolvedValue([
+      {
+        ...completedBooking,
+        hasReview: true,
+        availableActions: [],
+        nextStep: {
+          action: null,
+          label: 'Reserva cerrada',
+          description: 'No hay acciones pendientes.',
+        },
+      },
+    ]);
+    renderPage();
+
+    await waitFor(() =>
+      expect(
+        screen.queryByRole('option', {
+          name: 'Cambio de termica - Ana Ruiz',
+        }),
+      ).not.toBeInTheDocument(),
+    );
   });
 });

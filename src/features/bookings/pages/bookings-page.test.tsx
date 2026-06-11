@@ -62,6 +62,16 @@ describe('BookingsPage', () => {
         professionalName: 'Ana Ruiz',
         scheduledAt: '2026-05-30T13:30:00.000Z',
         status: 'pending',
+        statusLabel: 'Pendiente de confirmacion',
+        statusDescription: 'La reserva espera confirmacion del profesional.',
+        availableActions: ['confirm_booking'],
+        nextStep: {
+          action: 'confirm_booking',
+          label: 'Confirmar reserva',
+          description: 'El profesional debe confirmar el turno.',
+        },
+        hasPayment: false,
+        hasReview: false,
         notes: 'Revisar perdida bajo mesada',
         createdAt: '2026-05-28T12:30:00.000Z',
       },
@@ -76,6 +86,16 @@ describe('BookingsPage', () => {
       professionalName: 'Ana Ruiz',
       scheduledAt: '2026-05-30T13:30:00.000Z',
       status: 'cancelled',
+      statusLabel: 'Cancelada',
+      statusDescription: 'Esta reserva fue cancelada.',
+      availableActions: [],
+      nextStep: {
+        action: null,
+        label: 'Reserva cerrada',
+        description: 'No hay acciones pendientes.',
+      },
+      hasPayment: false,
+      hasReview: false,
       notes: 'Revisar perdida bajo mesada',
       createdAt: '2026-05-28T12:30:00.000Z',
     });
@@ -99,5 +119,154 @@ describe('BookingsPage', () => {
 
     expect(await screen.findByText(/Reserva cancelada/)).toBeInTheDocument();
     expect(bookingsServiceMock.update.mock.calls[0]).toEqual(['booking-1', { status: 'cancelled' }]);
+  });
+
+  it('permite al profesional marcar un trabajo confirmado como terminado', async () => {
+    useAuthMock.mockReturnValue({
+      user: {
+        id: 'pro-top',
+        email: 'pro@arreglaya.com',
+        fullName: 'Profesional Demo',
+        role: 'profesional',
+      },
+      accessToken: 'token',
+      refreshToken: 'refresh',
+      isAuthenticated: true,
+      isBootstrapping: false,
+      login: vi.fn(),
+      register: vi.fn(),
+      logout: vi.fn(),
+      updateUser: vi.fn(),
+    });
+    bookingsServiceMock.list.mockResolvedValue([
+      {
+        id: 'booking-1',
+        serviceRequestId: 'request-1',
+        serviceRequestTitle: 'Arreglo de canilla',
+        clientId: 'client-1',
+        clientName: 'Cliente Demo',
+        professionalId: 'pro-top',
+        professionalName: 'Ana Ruiz',
+        scheduledAt: '2026-05-30T13:30:00.000Z',
+        status: 'confirmed',
+        statusLabel: 'Reserva confirmada',
+        statusDescription: 'El turno esta confirmado y listo para avanzar.',
+        availableActions: ['pay', 'complete_work'],
+        nextStep: {
+          action: 'pay',
+          label: 'Pagar servicio',
+          description: 'Completa el pago del servicio.',
+        },
+        hasPayment: false,
+        hasReview: false,
+        notes: 'Revisar perdida bajo mesada',
+        createdAt: '2026-05-28T12:30:00.000Z',
+      },
+    ]);
+    bookingsServiceMock.update.mockResolvedValue({
+      id: 'booking-1',
+      serviceRequestId: 'request-1',
+      serviceRequestTitle: 'Arreglo de canilla',
+      clientId: 'client-1',
+      clientName: 'Cliente Demo',
+      professionalId: 'pro-top',
+      professionalName: 'Ana Ruiz',
+      scheduledAt: '2026-05-30T13:30:00.000Z',
+      status: 'completed',
+      statusLabel: 'Trabajo completado',
+      statusDescription: 'El trabajo fue finalizado por el profesional.',
+      availableActions: ['review'],
+      nextStep: {
+        action: 'review',
+        label: 'Calificar servicio',
+        description: 'Deja tu resena para cerrar el flujo.',
+      },
+      hasPayment: false,
+      hasReview: false,
+      notes: 'Trabajo terminado',
+      createdAt: '2026-05-28T12:30:00.000Z',
+    });
+
+    render(
+      <TestProviders>
+        <MemoryRouter>
+          <BookingsPage />
+        </MemoryRouter>
+      </TestProviders>,
+    );
+
+    expect(await screen.findByText('Arreglo de canilla')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Marcar trabajo como terminado' }));
+
+    expect(await screen.findByText(/Trabajo marcado como terminado/)).toBeInTheDocument();
+    expect(bookingsServiceMock.update.mock.calls[0]).toEqual(['booking-1', { status: 'completed' }]);
+  });
+
+  it('oculta acciones de pago y calificacion cuando backend no las habilita', async () => {
+    bookingsServiceMock.list.mockResolvedValue([
+      {
+        id: 'booking-paid',
+        serviceRequestId: 'request-1',
+        serviceRequestTitle: 'Arreglo de canilla',
+        clientId: 'client-1',
+        clientName: 'Cliente Demo',
+        professionalId: 'pro-top',
+        professionalName: 'Ana Ruiz',
+        scheduledAt: '2026-05-30T13:30:00.000Z',
+        status: 'confirmed',
+        statusLabel: 'Reserva confirmada',
+        statusDescription: 'El turno esta confirmado y listo para avanzar.',
+        availableActions: ['complete_work'],
+        nextStep: {
+          action: 'complete_work',
+          label: 'Esperar finalizacion',
+          description: 'El profesional debe marcar el trabajo como terminado.',
+        },
+        hasPayment: true,
+        hasReview: false,
+        notes: 'Pago ya generado',
+        createdAt: '2026-05-28T12:30:00.000Z',
+      },
+      {
+        id: 'booking-reviewed',
+        serviceRequestId: 'request-2',
+        serviceRequestTitle: 'Cambio de termica',
+        clientId: 'client-1',
+        clientName: 'Cliente Demo',
+        professionalId: 'pro-top',
+        professionalName: 'Ana Ruiz',
+        scheduledAt: '2026-05-31T13:30:00.000Z',
+        status: 'completed',
+        statusLabel: 'Trabajo completado',
+        statusDescription: 'El trabajo fue finalizado por el profesional.',
+        availableActions: [],
+        nextStep: {
+          action: null,
+          label: 'Reserva cerrada',
+          description: 'No hay acciones pendientes.',
+        },
+        hasPayment: true,
+        hasReview: true,
+        notes: 'Ya calificado',
+        createdAt: '2026-05-29T12:30:00.000Z',
+      },
+    ]);
+
+    render(
+      <TestProviders>
+        <MemoryRouter>
+          <BookingsPage />
+        </MemoryRouter>
+      </TestProviders>,
+    );
+
+    expect(await screen.findByText('Arreglo de canilla')).toBeInTheDocument();
+    expect(screen.getByText('Cambio de termica')).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Pagar servicio' }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Calificar servicio' }),
+    ).not.toBeInTheDocument();
   });
 });

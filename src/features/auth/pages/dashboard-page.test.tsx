@@ -73,6 +73,14 @@ const serviceRequest = (status: 'open' | 'quoted' | 'assigned' | 'completed' | '
   title: `Solicitud ${status}`,
   description: 'Descripcion de prueba',
   status,
+  statusLabel: `Solicitud ${status}`,
+  statusDescription: 'Estado de solicitud de prueba.',
+  availableActions: [],
+  nextStep: {
+    action: null,
+    label: 'Sin acciones pendientes',
+    description: 'No hay acciones pendientes para esta solicitud.',
+  },
   category: { id: 'cat-1', name: 'Plomeria', slug: 'plomeria' },
   city: 'Buenos Aires',
   zone: 'Palermo',
@@ -90,6 +98,16 @@ const booking = (status: 'pending' | 'confirmed' | 'completed' | 'cancelled') =>
   professionalName: 'Profesional Demo',
   scheduledAt: '2026-06-10T14:00:00.000Z',
   status,
+  statusLabel: `Reserva ${status}`,
+  statusDescription: 'Estado de reserva de prueba.',
+  availableActions: [],
+  nextStep: {
+    action: null,
+    label: 'Sin acciones pendientes',
+    description: 'No hay acciones pendientes para esta reserva.',
+  },
+  hasPayment: false,
+  hasReview: false,
   createdAt: '2026-06-01T11:00:00.000Z',
 });
 

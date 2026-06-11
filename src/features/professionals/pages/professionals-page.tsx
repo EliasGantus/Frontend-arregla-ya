@@ -493,15 +493,10 @@ export const ProfessionalProfilePage = () => {
                   className="w-full sm:w-auto"
                   variant="secondary"
                   onClick={() => {
-                    void navigate(
-                      `/app/profesionales/${professional.id}/reservar`,
-                      {
-                        state: { professional },
-                      },
-                    );
+                    void navigate('/app/solicitudes');
                   }}
                 >
-                  Reservar
+                  Ver solicitudes
                 </Button>
               ) : null}
             </>
@@ -618,19 +613,14 @@ export const ProfessionalProfilePage = () => {
                 ))}
               </div>
               <Button
-                aria-label={`Reservar turno con ${professional.fullName}`}
+                aria-label={`Ver solicitudes para ${professional.fullName}`}
                 className="mt-6 w-full md:hidden"
                 variant="secondary"
                 onClick={() => {
-                  void navigate(
-                    `/app/profesionales/${professional.id}/reservar`,
-                    {
-                      state: { professional },
-                    },
-                  );
+                  void navigate('/app/solicitudes');
                 }}
               >
-                Reservar
+                Ver solicitudes
               </Button>
             </Card>
 
@@ -792,7 +782,10 @@ export const ProfessionalBookingPage = () => {
   const [createdBooking, setCreatedBooking] = useState<Booking | null>(null);
   const professional = professionalFromState ?? profileQuery.data;
   const serviceRequests = serviceRequestsQuery.data ?? [];
-  const availableRequests = serviceRequests.length;
+  const bookableRequests = serviceRequests.filter(
+    (request) => request.status === 'assigned',
+  );
+  const availableRequests = bookableRequests.length;
 
   const submitBooking = (values: BookingFormValues) => {
     if (!professional) {
@@ -991,7 +984,7 @@ export const ProfessionalBookingPage = () => {
                 Completa la reserva
               </h2>
               <p className="mt-1 text-sm text-slate-500">
-                Asocia una solicitud abierta y propone una fecha tentativa.
+                Asocia una solicitud con cotizacion aceptada y propone una fecha tentativa.
               </p>
             </div>
             <form
@@ -1006,8 +999,8 @@ export const ProfessionalBookingPage = () => {
                   error={errors.serviceRequestId?.message}
                   {...register('serviceRequestId')}
                 >
-                  <option value="">Selecciona una solicitud abierta</option>
-                  {serviceRequests.map((request) => (
+                  <option value="">Selecciona una solicitud asignada</option>
+                  {bookableRequests.map((request) => (
                     <option key={request.id} value={request.id}>
                       {request.title} - {request.city} / {request.zone}
                     </option>
@@ -1044,17 +1037,17 @@ export const ProfessionalBookingPage = () => {
                   {...register('notes')}
                 />
               </label>
-              {!serviceRequests.length && !serviceRequestsQuery.isLoading ? (
+              {!bookableRequests.length && !serviceRequestsQuery.isLoading ? (
                 <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600 md:col-span-2">
-                  Para reservar necesitas una solicitud abierta. Crea una
-                  solicitud y vuelve a seleccionar el profesional.
+                  Para reservar necesitas aceptar primero una cotizacion desde
+                  el detalle de la solicitud.
                 </div>
               ) : null}
               <div className="md:col-span-2">
                 <Button
                   className="w-full sm:w-auto"
                   disabled={
-                    createBookingMutation.isPending || !serviceRequests.length
+                    createBookingMutation.isPending || !bookableRequests.length
                   }
                   type="submit"
                 >
