@@ -251,3 +251,17 @@ Commands:
 - Keep current endpoints unless a specific contract blocks this slice.
 - Document broader endpoint normalization as future work.
 - Prefer one coherent client flow PR over many small visual-only tweaks, but keep implementation commits scoped by layer.
+
+## Implemented In First Flow Slice
+
+- Backend serializers expose flow metadata for requests and bookings.
+- Booking transitions now validate the professional/admin completion path.
+- Shared frontend components guide next actions and consistent states.
+- Request detail, bookings, payments, and reviews now expose clearer next steps.
+
+## Follow-Up Recommendations
+
+- Add a dedicated dashboard summary endpoint per role.
+- Normalize endpoint namespaces in a separate backend compatibility PR.
+- Add a real notification center once push/email flows are productized.
+- Revisit admin workflows after client/professional flow telemetry is available.
