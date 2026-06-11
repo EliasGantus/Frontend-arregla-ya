@@ -110,6 +110,43 @@ describe('PaymentsPage', () => {
     });
   });
 
+  it('muestra estado iniciado cuando MercadoPago requiere checkout', async () => {
+    paymentsServiceMock.createForBooking.mockResolvedValueOnce({
+      id: 'payment-2',
+      bookingId: 'booking-1',
+      serviceRequestId: 'request-1',
+      serviceRequestTitle: 'Cambio de termica',
+      professionalId: 'pro-1',
+      professionalName: 'Ana Ruiz',
+      amountCents: 8500000,
+      currency: 'ARS',
+      status: 'pending',
+      provider: 'mercado_pago',
+      checkoutUrl: 'https://www.mercadopago.com.ar/checkout/payment-2',
+      createdAt: '2026-05-29T12:00:00.000Z',
+    });
+    renderPage();
+
+    await screen.findByText('Cambio de termica');
+    fireEvent.change(screen.getByLabelText('Monto'), {
+      target: { value: '85000' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmar pago' }));
+
+    expect(
+      await screen.findByText('Pago iniciado en MercadoPago.'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Volver a reservas' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: 'Abrir MercadoPago' }),
+    ).toHaveAttribute(
+      'href',
+      'https://www.mercadopago.com.ar/checkout/payment-2',
+    );
+  });
+
   it('muestra error descriptivo cuando falla el cobro', async () => {
     paymentsServiceMock.createForBooking.mockRejectedValue(
       new ApiError('MercadoPago rechazo la tarjeta.', 402, 'PAYMENT_REJECTED'),

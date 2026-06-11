@@ -187,7 +187,11 @@ export const PaymentsPage = () => {
       {payment ? (
         <div className="space-y-3">
           <SuccessState
-            title="Pago procesado exitosamente."
+            title={
+              payment.status === 'approved'
+                ? 'Pago procesado exitosamente.'
+                : 'Pago iniciado en MercadoPago.'
+            }
             description={
               payment.status === 'approved'
                 ? `Comprobante ${payment.receiptNumber ?? payment.id}. Recibiras el detalle por email.`
