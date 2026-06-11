@@ -7,8 +7,20 @@ import { bookingsService } from '@/features/bookings/services/bookings-service';
 import { quotesService } from '@/features/quotes/services/quotes-service';
 import { serviceRequestsService } from '@/features/service-requests/services/service-requests-service';
 import { ApiError } from '@/shared/api/api-error';
-import type { Booking, Quote, ServiceRequest, UserRole } from '@/shared/types/api';
+import type {
+  Booking,
+  Quote,
+  ServiceRequest,
+  UserRole,
+} from '@/shared/types/api';
+import { Button } from '@/shared/ui/button';
 import { Card } from '@/shared/ui/card';
+import {
+  MobileHero,
+  MobilePage,
+  MobileSection,
+  MobileStats,
+} from '@/shared/ui/mobile-page';
 import { StatusPanel } from '@/shared/ui/status-panel';
 
 type DashboardMetric = {
@@ -16,7 +28,11 @@ type DashboardMetric = {
   value: string;
 };
 
-const activeRequestStatuses: ServiceRequest['status'][] = ['open', 'quoted', 'assigned'];
+const activeRequestStatuses: ServiceRequest['status'][] = [
+  'open',
+  'quoted',
+  'assigned',
+];
 const activeBookingStatuses: Booking['status'][] = ['pending', 'confirmed'];
 
 const formatCount = (value: number) => String(value).padStart(2, '0');
@@ -31,17 +47,23 @@ const metricsForClient = (
   {
     label: 'Solicitudes activas',
     value: formatCount(
-      requests.filter((request) => activeRequestStatuses.includes(request.status)).length,
+      requests.filter((request) =>
+        activeRequestStatuses.includes(request.status),
+      ).length,
     ),
   },
   {
     label: 'Cotizadas',
-    value: formatCount(requests.filter((request) => request.status === 'quoted').length),
+    value: formatCount(
+      requests.filter((request) => request.status === 'quoted').length,
+    ),
   },
   {
     label: 'Reservas activas',
     value: formatCount(
-      bookings.filter((booking) => activeBookingStatuses.includes(booking.status)).length,
+      bookings.filter((booking) =>
+        activeBookingStatuses.includes(booking.status),
+      ).length,
     ),
   },
 ];
@@ -54,7 +76,9 @@ const metricsForProfessional = (
   {
     label: 'Trabajos asignados',
     value: formatCount(
-      bookings.filter((booking) => activeBookingStatuses.includes(booking.status)).length,
+      bookings.filter((booking) =>
+        activeBookingStatuses.includes(booking.status),
+      ).length,
     ),
   },
   {
@@ -74,16 +98,23 @@ const metricsForAdmin = (
   {
     label: 'Solicitudes abiertas',
     value: formatCount(
-      requests.filter((request) => activeRequestStatuses.includes(request.status)).length,
+      requests.filter((request) =>
+        activeRequestStatuses.includes(request.status),
+      ).length,
     ),
   },
   {
     label: 'Completadas',
-    value: formatCount(requests.filter((request) => request.status === 'completed').length),
+    value: formatCount(
+      requests.filter((request) => request.status === 'completed').length,
+    ),
   },
 ];
 
-const actionByRole: Record<string, { title: string; description: string; path: string }[]> = {
+const actionByRole: Record<
+  string,
+  { title: string; description: string; path: string }[]
+> = {
   cliente: [
     {
       title: 'Nueva solicitud',
@@ -124,6 +155,16 @@ const introByRole = {
 const getFirstName = (name: string | undefined) =>
   name?.split(' ').filter(Boolean)[0] ?? 'usuario';
 
+const firstActionableRequest = (requests: ServiceRequest[]) =>
+  requests.find(
+    (request) => request.nextStep?.action || request.availableActions?.length,
+  );
+
+const firstActionableBooking = (bookings: Booking[]) =>
+  bookings.find(
+    (booking) => booking.nextStep?.action || booking.availableActions?.length,
+  );
+
 export const DashboardPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -154,9 +195,18 @@ export const DashboardPage = () => {
     enabled: role === 'admin',
   });
   const metricsByRole: Record<UserRole, DashboardMetric[]> = {
-    cliente: metricsForClient(serviceRequestsQuery.data ?? [], bookingsQuery.data ?? []),
-    profesional: metricsForProfessional(quotesQuery.data ?? [], bookingsQuery.data ?? []),
-    admin: metricsForAdmin(adminUsersQuery.data?.length ?? 0, adminRequestsQuery.data ?? []),
+    cliente: metricsForClient(
+      serviceRequestsQuery.data ?? [],
+      bookingsQuery.data ?? [],
+    ),
+    profesional: metricsForProfessional(
+      quotesQuery.data ?? [],
+      bookingsQuery.data ?? [],
+    ),
+    admin: metricsForAdmin(
+      adminUsersQuery.data?.length ?? 0,
+      adminRequestsQuery.data ?? [],
+    ),
   };
   const metricError =
     serviceRequestsQuery.error ||
@@ -166,17 +216,35 @@ export const DashboardPage = () => {
     adminRequestsQuery.error;
   const metrics = metricsByRole[role];
   const actions = actionByRole[role];
+  const actionableRequest = firstActionableRequest(
+    serviceRequestsQuery.data ?? [],
+  );
+  const actionableBooking = firstActionableBooking(bookingsQuery.data ?? []);
+  const clientNextAction = actionableRequest
+    ? {
+        title: actionableRequest.nextStep.label,
+        description: actionableRequest.nextStep.description,
+        itemTitle: actionableRequest.title,
+        path: `/app/solicitudes/${actionableRequest.id}`,
+        cta: 'Ver solicitud',
+      }
+    : actionableBooking
+      ? {
+          title: actionableBooking.nextStep.label,
+          description: actionableBooking.nextStep.description,
+          itemTitle: actionableBooking.serviceRequestTitle,
+          path: '/app/reservas',
+          cta: 'Ver reserva',
+        }
+      : null;
 
   return (
-    <div className="space-y-5 md:space-y-6">
-      <div className="md:hidden">
-        <Card className="!bg-[#07152a] text-white shadow-lg shadow-slate-900/20">
-          <p className="text-2xl font-black">
-            Hola, {getFirstName(user?.fullName)}
-          </p>
-          <p className="mt-2 text-sm text-slate-300">{introByRole[role]}</p>
-        </Card>
-      </div>
+    <MobilePage>
+      <MobileHero
+        eyebrow="Panel"
+        title={`Hola, ${getFirstName(user?.fullName)}`}
+        description={introByRole[role]}
+      />
 
       <div className="hidden md:block">
         <StatusPanel
@@ -195,21 +263,43 @@ export const DashboardPage = () => {
         </Card>
       ) : null}
 
-      <div className="grid grid-cols-3 gap-3 md:gap-4">
-        {metrics.map((metric) => (
-          <Card
-            key={metric.label}
-            className="rounded-2xl p-4 text-center md:rounded-3xl md:text-left"
+      {role === 'cliente' && clientNextAction ? (
+        <Card className="space-y-4 md:hidden">
+          <div className="space-y-2">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-700">
+              Proxima accion
+            </p>
+            <div className="space-y-1">
+              <h2 className="text-lg font-bold text-slate-950">
+                {clientNextAction.title}
+              </h2>
+              <p className="text-sm font-semibold text-slate-700">
+                {clientNextAction.itemTitle}
+              </p>
+              <p className="text-sm leading-6 text-slate-600">
+                {clientNextAction.description}
+              </p>
+            </div>
+          </div>
+          <Button
+            className="w-full"
+            variant="secondary"
+            onClick={() => void navigate(clientNextAction.path)}
           >
-            <p className="text-xs font-semibold text-slate-400 md:text-sm md:text-slate-500">
-              {metric.label}
-            </p>
-            <p className="mt-2 text-2xl font-black tracking-tight text-slate-950 md:mt-3 md:text-4xl">
-              {metric.value}
-            </p>
-          </Card>
-        ))}
-      </div>
+            {clientNextAction.cta}
+          </Button>
+        </Card>
+      ) : null}
+
+      <MobileSection eyebrow="Actividad" title="Metricas">
+        <MobileStats
+          stats={metrics.map((metric) => ({
+            label: metric.label,
+            value: metric.value,
+          }))}
+          className="grid-cols-3 md:gap-4"
+        />
+      </MobileSection>
 
       <section className="space-y-3">
         <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
@@ -231,13 +321,23 @@ export const DashboardPage = () => {
               </span>
             </span>
             <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-accent-200 bg-accent-50 text-accent-500">
-              <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-                <path d="M5 12h14M13 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
+              <svg
+                className="h-5 w-5"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2.5}
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M5 12h14M13 6l6 6-6 6"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
               </svg>
             </span>
           </button>
         ))}
       </section>
-    </div>
+    </MobilePage>
   );
 };
