@@ -87,6 +87,10 @@ const statusCount = (
   statuses: ServiceRequestStatus[],
 ) => requests.filter((request) => statuses.includes(request.status)).length;
 
+const canCreateQuoteForRequest = (request: ServiceRequest) =>
+  request.availableActions.includes('create_quote') ||
+  request.nextStep?.action === 'create_quote';
+
 const requestProgress: Record<ServiceRequestStatus, string> = {
   draft: 'Datos iniciales',
   open: 'Esperando cotizaciones',
@@ -534,7 +538,7 @@ const ServiceRequestsContent = () => {
                 >
                   Ver detalle
                 </Link>
-                {isProfessionalView ? (
+                {isProfessionalView && canCreateQuoteForRequest(request) ? (
                   <Link
                     className="inline-flex min-h-11 w-full items-center justify-center rounded-2xl bg-accent-500 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-accent-500/30 transition hover:bg-accent-400 sm:w-auto"
                     to="/app/cotizaciones"

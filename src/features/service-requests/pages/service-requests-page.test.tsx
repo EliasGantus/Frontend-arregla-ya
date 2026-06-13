@@ -146,4 +146,123 @@ describe('ServiceRequestsPage', () => {
       screen.getByRole('link', { name: 'Crear una solicitud' }),
     ).toHaveAttribute('href', '#nueva-solicitud');
   });
+
+  it('muestra accion de cotizar a profesionales cuando la solicitud permite crear cotizacion', async () => {
+    useAuthMock.mockReturnValue({
+      user: {
+        id: 'pro-1',
+        email: 'pro@arreglaya.com',
+        fullName: 'Profesional Demo',
+        role: 'profesional',
+      },
+      accessToken: 'token',
+      refreshToken: 'refresh',
+      isAuthenticated: true,
+      isBootstrapping: false,
+      login: vi.fn(),
+      register: vi.fn(),
+      logout: vi.fn(),
+      updateUser: vi.fn(),
+    });
+    serviceRequestsServiceMock.list.mockResolvedValue([
+      {
+        id: 'request-actions',
+        title: 'Instalar luminaria',
+        description: 'Colocar aplique en comedor',
+        status: 'open',
+        statusLabel: 'Abierta',
+        statusDescription: 'La solicitud acepta cotizaciones.',
+        availableActions: ['create_quote'],
+        nextStep: {
+          action: null,
+          label: 'Enviar cotizacion',
+          description: 'Prepara una propuesta para el cliente.',
+        },
+        category: { id: 'cat-elec', name: 'Electricidad', slug: 'electricidad' },
+        city: 'Buenos Aires',
+        zone: 'Caballito',
+        photos: [],
+        createdAt: '2026-05-28T12:00:00.000Z',
+      },
+      {
+        id: 'request-next-step',
+        title: 'Reparar tomacorriente',
+        description: 'No funciona un toma de la cocina',
+        status: 'open',
+        statusLabel: 'Abierta',
+        statusDescription: 'La solicitud espera propuestas.',
+        availableActions: [],
+        nextStep: {
+          action: 'create_quote',
+          label: 'Cotizar solicitud',
+          description: 'Envia una propuesta para avanzar.',
+        },
+        category: { id: 'cat-elec', name: 'Electricidad', slug: 'electricidad' },
+        city: 'Buenos Aires',
+        zone: 'Almagro',
+        photos: [],
+        createdAt: '2026-05-28T13:00:00.000Z',
+      },
+    ]);
+
+    renderPage();
+
+    expect(await screen.findByText('Instalar luminaria')).toBeInTheDocument();
+    expect(await screen.findByText('Reparar tomacorriente')).toBeInTheDocument();
+    expect(screen.getAllByRole('link', { name: 'Cotizar solicitud' })).toHaveLength(
+      2,
+    );
+    expect(screen.getAllByRole('link', { name: 'Ver detalle' })).toHaveLength(2);
+  });
+
+  it('oculta accion de cotizar a profesionales cuando la solicitud no permite crear cotizacion', async () => {
+    useAuthMock.mockReturnValue({
+      user: {
+        id: 'pro-1',
+        email: 'pro@arreglaya.com',
+        fullName: 'Profesional Demo',
+        role: 'profesional',
+      },
+      accessToken: 'token',
+      refreshToken: 'refresh',
+      isAuthenticated: true,
+      isBootstrapping: false,
+      login: vi.fn(),
+      register: vi.fn(),
+      logout: vi.fn(),
+      updateUser: vi.fn(),
+    });
+    serviceRequestsServiceMock.list.mockResolvedValue([
+      {
+        id: 'request-completed',
+        title: 'Pintura terminada',
+        description: 'Trabajo finalizado por otro profesional',
+        status: 'completed',
+        statusLabel: 'Trabajo completado',
+        statusDescription: 'El trabajo ya fue marcado como finalizado.',
+        availableActions: [],
+        nextStep: {
+          action: null,
+          label: 'Sin acciones pendientes',
+          description: 'Esta solicitud ya no admite cotizaciones.',
+        },
+        category: { id: 'cat-pint', name: 'Pintura', slug: 'pintura' },
+        city: 'Buenos Aires',
+        zone: 'Belgrano',
+        photos: [],
+        createdAt: '2026-05-27T12:00:00.000Z',
+      },
+    ]);
+
+    renderPage();
+
+    expect(await screen.findByText('Pintura terminada')).toBeInTheDocument();
+    expect(
+      screen.queryByRole('link', { name: 'Cotizar solicitud' }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Ver detalle' })).toHaveAttribute(
+      'href',
+      '/app/solicitudes/request-completed',
+    );
+  });
 });
