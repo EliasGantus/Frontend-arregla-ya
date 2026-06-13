@@ -165,6 +165,28 @@ const firstActionableBooking = (bookings: Booking[]) =>
     (booking) => booking.nextStep?.action || booking.availableActions?.length,
   );
 
+const resolveClientActionPath = (
+  entityFallbackPath: string,
+  nextStep: ServiceRequest['nextStep'],
+) => {
+  if (nextStep.path) {
+    return nextStep.path;
+  }
+
+  switch (nextStep.action) {
+    case 'pay':
+      return '/app/pagos';
+    case 'review':
+      return '/app/calificaciones';
+    case 'confirm_booking':
+    case 'complete_work':
+      return '/app/reservas';
+    case 'accept_quote':
+    default:
+      return entityFallbackPath;
+  }
+};
+
 export const DashboardPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -225,7 +247,10 @@ export const DashboardPage = () => {
         title: actionableRequest.nextStep.label,
         description: actionableRequest.nextStep.description,
         itemTitle: actionableRequest.title,
-        path: `/app/solicitudes/${actionableRequest.id}`,
+        path: resolveClientActionPath(
+          `/app/solicitudes/${actionableRequest.id}`,
+          actionableRequest.nextStep,
+        ),
         cta: 'Ver solicitud',
       }
     : actionableBooking
@@ -233,7 +258,10 @@ export const DashboardPage = () => {
           title: actionableBooking.nextStep.label,
           description: actionableBooking.nextStep.description,
           itemTitle: actionableBooking.serviceRequestTitle,
-          path: '/app/reservas',
+          path: resolveClientActionPath(
+            '/app/reservas',
+            actionableBooking.nextStep,
+          ),
           cta: 'Ver reserva',
         }
       : null;
