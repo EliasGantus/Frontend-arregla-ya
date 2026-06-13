@@ -6,9 +6,14 @@ import { useAuth } from '@/features/auth/context/auth-context';
 import { bookingsService } from '@/features/bookings/services/bookings-service';
 import { ApiError } from '@/shared/api/api-error';
 import type { AuthUser, Booking, BookingStatus } from '@/shared/types/api';
-import { Badge } from '@/shared/ui/badge';
 import { Button } from '@/shared/ui/button';
 import { Card } from '@/shared/ui/card';
+import {
+  MobileHero,
+  MobilePage,
+  MobileSection,
+  MobileStats,
+} from '@/shared/ui/mobile-page';
 import { StatusChip } from '@/shared/ui/status-chip';
 import { StatusPanel } from '@/shared/ui/status-panel';
 
@@ -113,7 +118,7 @@ export const BookingsPage = () => {
     (user?.role === 'cliente' || user?.role === 'admin');
 
   return (
-    <div className="space-y-4 md:space-y-6">
+    <MobilePage>
       <div className="hidden md:block">
         <StatusPanel
           eyebrow="Reservas"
@@ -122,24 +127,12 @@ export const BookingsPage = () => {
         />
       </div>
 
-      <Card className="rounded-[28px] !bg-ink p-5 text-white shadow-lg shadow-slate-300/70 md:hidden">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-accent-200">
-              {mobileCopy.eyebrow}
-            </p>
-            <h1 className="mt-2 text-2xl font-black leading-tight">
-              {mobileCopy.title}
-            </h1>
-            <p className="mt-2 text-sm leading-6 text-slate-200">
-              {mobileCopy.description}
-            </p>
-          </div>
-          <div className="shrink-0 rounded-full bg-white px-3 py-1 text-xs font-black uppercase tracking-[0.14em] text-ink">
-            {bookings.length} total
-          </div>
-        </div>
-      </Card>
+      <MobileHero
+        eyebrow={mobileCopy.eyebrow}
+        title={mobileCopy.title}
+        description={mobileCopy.description}
+        badge={`${bookings.length} total`}
+      />
 
       {notice ? (
         <Card className="rounded-[28px] border border-emerald-200 bg-emerald-50 md:rounded-3xl">
@@ -162,36 +155,16 @@ export const BookingsPage = () => {
         </Card>
       ) : null}
 
-      <section className="rounded-[28px] bg-white p-4 shadow-lg shadow-slate-200/70 md:rounded-3xl md:p-6">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400 md:hidden">
-              Seguimiento
-            </p>
-            <h2 className="text-xl font-black text-slate-950 md:text-xl">
-              {mobileCopy.listTitle}
-            </h2>
-            <p className="mt-1 text-sm text-slate-500">
-              {mobileCopy.listDescription}
-            </p>
-          </div>
-          <Badge>{mobileCopy.badge}</Badge>
-        </div>
-
-        <div className="mt-4 grid grid-cols-3 gap-2">
-          {bookingStats.map((stat) => (
-            <div
-              className="rounded-2xl bg-slate-50 px-3 py-3 text-center"
-              key={stat.label}
-            >
-              <p className="text-lg font-black text-slate-950">{stat.value}</p>
-              <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-400">
-                {stat.label}
-              </p>
-            </div>
-          ))}
-        </div>
-      </section>
+      <MobileSection
+        eyebrow="Seguimiento"
+        title={mobileCopy.listTitle}
+        description={mobileCopy.listDescription}
+        badge={mobileCopy.badge}
+      >
+        <Card className="rounded-[28px] bg-white p-4 shadow-lg shadow-slate-200/70 md:rounded-3xl md:p-6">
+          <MobileStats stats={bookingStats} className="grid-cols-3 gap-2" />
+        </Card>
+      </MobileSection>
 
       {!bookings.length && !bookingsQuery.isLoading ? (
         <Card className="rounded-[28px] bg-white p-5 text-center shadow-lg shadow-slate-200/70 md:rounded-3xl">
@@ -250,19 +223,11 @@ export const BookingsPage = () => {
               </div>
             </div>
 
-            <div className="mt-4">
-              {booking.notes ? (
-                <p className="rounded-2xl bg-white text-sm leading-6 text-slate-600">
-                  {booking.notes}
-                </p>
-              ) : null}
-            </div>
-
-            <div className="mt-4 rounded-2xl bg-slate-50 px-4 py-3">
-              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
+            <div className="mt-4 rounded-2xl border border-accent-100 bg-accent-50 px-4 py-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-accent-700">
                 Proximo paso
               </p>
-              <p className="mt-1 text-sm font-bold text-slate-950">
+              <p className="mt-1 text-sm font-black text-slate-950">
                 {booking.nextStep?.label ?? statusCopy[booking.status]}
               </p>
               <p className="mt-1 text-sm leading-6 text-slate-600">
@@ -272,52 +237,15 @@ export const BookingsPage = () => {
               </p>
             </div>
 
+            <div className="mt-4">
+              {booking.notes ? (
+                <p className="rounded-2xl bg-white text-sm leading-6 text-slate-600">
+                  {booking.notes}
+                </p>
+              ) : null}
+            </div>
+
             <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-              {canConfirm(booking) ? (
-                <Button
-                  className="w-full sm:w-auto"
-                  disabled={updateMutation.isPending}
-                  onClick={() =>
-                    updateMutation.mutate({
-                      bookingId: booking.id,
-                      status: 'confirmed',
-                    })
-                  }
-                  variant="secondary"
-                >
-                  Confirmar reserva
-                </Button>
-              ) : null}
-              {canCancel(booking) ? (
-                <Button
-                  className="w-full sm:w-auto"
-                  disabled={updateMutation.isPending}
-                  onClick={() =>
-                    updateMutation.mutate({
-                      bookingId: booking.id,
-                      status: 'cancelled',
-                    })
-                  }
-                  variant="ghost"
-                >
-                  Cancelar reserva
-                </Button>
-              ) : null}
-              {canComplete(booking, user?.role) ? (
-                <Button
-                  className="w-full sm:w-auto"
-                  disabled={updateMutation.isPending}
-                  onClick={() =>
-                    updateMutation.mutate({
-                      bookingId: booking.id,
-                      status: 'completed',
-                    })
-                  }
-                  variant="secondary"
-                >
-                  Marcar trabajo como terminado
-                </Button>
-              ) : null}
               {canPay(booking) ? (
                 <Button
                   className="w-full sm:w-auto"
@@ -341,10 +269,55 @@ export const BookingsPage = () => {
                   Calificar servicio
                 </Button>
               ) : null}
+              {canCancel(booking) ? (
+                <Button
+                  className="w-full sm:w-auto"
+                  disabled={updateMutation.isPending}
+                  onClick={() =>
+                    updateMutation.mutate({
+                      bookingId: booking.id,
+                      status: 'cancelled',
+                    })
+                  }
+                  variant="ghost"
+                >
+                  Cancelar reserva
+                </Button>
+              ) : null}
+              {canConfirm(booking) ? (
+                <Button
+                  className="w-full sm:w-auto"
+                  disabled={updateMutation.isPending}
+                  onClick={() =>
+                    updateMutation.mutate({
+                      bookingId: booking.id,
+                      status: 'confirmed',
+                    })
+                  }
+                  variant="secondary"
+                >
+                  Confirmar reserva
+                </Button>
+              ) : null}
+              {canComplete(booking, user?.role) ? (
+                <Button
+                  className="w-full sm:w-auto"
+                  disabled={updateMutation.isPending}
+                  onClick={() =>
+                    updateMutation.mutate({
+                      bookingId: booking.id,
+                      status: 'completed',
+                    })
+                  }
+                  variant="secondary"
+                >
+                  Marcar trabajo como terminado
+                </Button>
+              ) : null}
             </div>
           </Card>
         ))}
       </div>
-    </div>
+    </MobilePage>
   );
 };

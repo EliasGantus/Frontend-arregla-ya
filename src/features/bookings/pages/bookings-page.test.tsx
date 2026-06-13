@@ -269,4 +269,54 @@ describe('BookingsPage', () => {
       screen.queryByRole('button', { name: 'Calificar servicio' }),
     ).not.toBeInTheDocument();
   });
+
+  it('destaca el proximo paso del cliente en la card de reserva', async () => {
+    bookingsServiceMock.list.mockResolvedValue([
+      {
+        id: 'booking-pay',
+        serviceRequestId: 'request-1',
+        serviceRequestTitle: 'Arreglo de canilla',
+        clientId: 'client-1',
+        clientName: 'Cliente Demo',
+        professionalId: 'pro-top',
+        professionalName: 'Ana Ruiz',
+        scheduledAt: '2026-05-30T13:30:00.000Z',
+        status: 'confirmed',
+        statusLabel: 'Reserva confirmada',
+        statusDescription: 'El turno esta confirmado.',
+        availableActions: ['pay'],
+        nextStep: {
+          action: 'pay',
+          label: 'Pagar servicio',
+          description: 'Completa el pago del servicio.',
+        },
+        hasPayment: false,
+        hasReview: false,
+        notes: 'Revisar perdida bajo mesada',
+        createdAt: '2026-05-28T12:30:00.000Z',
+      },
+    ]);
+
+    render(
+      <TestProviders>
+        <MemoryRouter>
+          <BookingsPage />
+        </MemoryRouter>
+      </TestProviders>,
+    );
+
+    expect(await screen.findByText('Proximo paso')).toBeInTheDocument();
+    expect(screen.getAllByText('Pagar servicio')).toHaveLength(2);
+    expect(
+      screen.getByRole('button', { name: 'Pagar servicio' }),
+    ).toBeInTheDocument();
+
+    const nextStepLabel = screen.getByText('Proximo paso');
+    const notes = screen.getByText('Revisar perdida bajo mesada');
+
+    expect(
+      nextStepLabel.compareDocumentPosition(notes) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
 });
