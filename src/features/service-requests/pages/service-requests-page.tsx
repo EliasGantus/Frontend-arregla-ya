@@ -26,6 +26,12 @@ import { Button } from '@/shared/ui/button';
 import { Card } from '@/shared/ui/card';
 import { FlowProgress } from '@/shared/ui/flow-progress';
 import { Input } from '@/shared/ui/input';
+import {
+  MobileHero,
+  MobilePage,
+  MobileSection,
+  MobileStats,
+} from '@/shared/ui/mobile-page';
 import { NextActionPanel } from '@/shared/ui/next-action-panel';
 import { Select } from '@/shared/ui/select';
 import { StatusPanel } from '@/shared/ui/status-panel';
@@ -209,6 +215,7 @@ const ServiceRequestsContent = () => {
   );
   const openRequests = statusCount(requests, ['open']);
   const isProfessionalView = user?.role === 'profesional';
+  const isClientView = user?.role === 'cliente';
   const requestStats = [
     { label: 'Abiertas', value: openRequests },
     { label: 'Cotizadas', value: statusCount(requests, ['quoted']) },
@@ -263,7 +270,7 @@ const ServiceRequestsContent = () => {
   };
 
   return (
-    <div className="space-y-4 md:space-y-6">
+    <MobilePage>
       <div className="hidden md:block">
         <StatusPanel
           eyebrow="Solicitudes"
@@ -272,22 +279,12 @@ const ServiceRequestsContent = () => {
         />
       </div>
 
-      <Card className="rounded-[28px] !bg-ink p-5 text-white shadow-lg shadow-slate-300/70 md:hidden">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-accent-200">
-              {mobileHero.eyebrow}
-            </p>
-            <h1 className="mt-2 text-2xl font-black">{mobileHero.title}</h1>
-            <p className="mt-2 text-sm leading-6 text-slate-200">
-              {mobileHero.description}
-            </p>
-          </div>
-          <div className="shrink-0 rounded-full bg-white px-3 py-1 text-xs font-black uppercase tracking-[0.14em] text-ink">
-            {mobileHero.pill}
-          </div>
-        </div>
-      </Card>
+      <MobileHero
+        eyebrow={mobileHero.eyebrow}
+        title={mobileHero.title}
+        description={mobileHero.description}
+        badge={mobileHero.pill}
+      />
 
       {categoriesQuery.error instanceof ApiError ||
       query.error instanceof ApiError ? (
@@ -435,39 +432,15 @@ const ServiceRequestsContent = () => {
         </Card>
       ) : null}
 
-      <section className="space-y-3">
-        <div className="rounded-[28px] bg-white p-4 shadow-lg shadow-slate-200/70 md:rounded-3xl md:p-6">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400 md:hidden">
-                {trackingCopy.eyebrow}
-              </p>
-              <h2 className="text-xl font-black text-slate-950 md:text-xl">
-                {trackingCopy.title}
-              </h2>
-              <p className="mt-1 text-sm text-slate-500">
-                {trackingCopy.description}
-              </p>
-            </div>
-            <Badge>{trackingCopy.badge}</Badge>
-          </div>
-
-          <div className="mt-4 grid grid-cols-3 gap-2">
-            {requestStats.map((stat) => (
-              <div
-                className="rounded-2xl bg-slate-50 px-3 py-3 text-center"
-                key={stat.label}
-              >
-                <p className="text-lg font-black text-slate-950">
-                  {stat.value}
-                </p>
-                <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-400">
-                  {stat.label}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
+      <MobileSection
+        eyebrow={trackingCopy.eyebrow}
+        title={trackingCopy.title}
+        description={trackingCopy.description}
+        badge={trackingCopy.badge}
+      >
+        <Card className="rounded-[28px] bg-white p-4 shadow-lg shadow-slate-200/70 md:rounded-3xl md:p-6">
+          <MobileStats stats={requestStats} className="grid-cols-3 gap-2" />
+        </Card>
 
         <div className="grid gap-4">
           {!requests.length && !query.isLoading ? (
@@ -535,9 +508,28 @@ const ServiceRequestsContent = () => {
                   </span>
                 ) : null}
               </div>
+              <div className="mt-4 rounded-2xl border border-accent-100 bg-accent-50 px-4 py-3">
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-accent-700">
+                  Proximo paso
+                </p>
+                <p className="mt-1 text-sm font-black text-slate-950">
+                  {request.nextStep?.label ??
+                    request.statusLabel ??
+                    statusCopy[request.status]}
+                </p>
+                <p className="mt-1 text-sm leading-6 text-slate-600">
+                  {request.nextStep?.description ??
+                    request.statusDescription ??
+                    'Abri el detalle para revisar el estado.'}
+                </p>
+              </div>
               <div className="mt-4 flex flex-col gap-2 sm:flex-row">
                 <Link
-                  className="inline-flex min-h-11 w-full items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-brand-300 hover:text-brand-700 sm:w-auto"
+                  className={
+                    isClientView
+                      ? 'inline-flex min-h-11 w-full items-center justify-center rounded-2xl bg-accent-500 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-accent-500/30 transition hover:bg-accent-400 sm:w-auto'
+                      : 'inline-flex min-h-11 w-full items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-brand-300 hover:text-brand-700 sm:w-auto'
+                  }
                   to={`/app/solicitudes/${request.id}`}
                 >
                   Ver detalle
@@ -554,8 +546,8 @@ const ServiceRequestsContent = () => {
             </Card>
           ))}
         </div>
-      </section>
-    </div>
+      </MobileSection>
+    </MobilePage>
   );
 };
 
