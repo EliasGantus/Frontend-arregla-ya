@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import type { PropsWithChildren } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 
@@ -30,7 +30,9 @@ const TestProviders = ({ children }: PropsWithChildren) => {
     },
   });
 
-  return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+  return (
+    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+  );
 };
 
 describe('BookingsPage', () => {
@@ -118,7 +120,10 @@ describe('BookingsPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Cancelar reserva' }));
 
     expect(await screen.findByText(/Reserva cancelada/)).toBeInTheDocument();
-    expect(bookingsServiceMock.update.mock.calls[0]).toEqual(['booking-1', { status: 'cancelled' }]);
+    expect(bookingsServiceMock.update.mock.calls[0]).toEqual([
+      'booking-1',
+      { status: 'cancelled' },
+    ]);
   });
 
   it('permite al profesional marcar un trabajo confirmado como terminado', async () => {
@@ -196,10 +201,28 @@ describe('BookingsPage', () => {
     );
 
     expect(await screen.findByText('Arreglo de canilla')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Marcar trabajo como terminado' }));
+    const nextStepBlock = screen.getByText('Proximo paso').parentElement;
 
-    expect(await screen.findByText(/Trabajo marcado como terminado/)).toBeInTheDocument();
-    expect(bookingsServiceMock.update.mock.calls[0]).toEqual(['booking-1', { status: 'completed' }]);
+    expect(nextStepBlock).not.toBeNull();
+    expect(
+      within(nextStepBlock as HTMLElement).queryByText('Pagar servicio'),
+    ).not.toBeInTheDocument();
+    expect(
+      within(nextStepBlock as HTMLElement).getByText(
+        'Marcar trabajo como terminado',
+      ),
+    ).toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Marcar trabajo como terminado' }),
+    );
+
+    expect(
+      await screen.findByText(/Trabajo marcado como terminado/),
+    ).toBeInTheDocument();
+    expect(bookingsServiceMock.update.mock.calls[0]).toEqual([
+      'booking-1',
+      { status: 'completed' },
+    ]);
   });
 
   it('oculta acciones de pago y calificacion cuando backend no las habilita', async () => {
