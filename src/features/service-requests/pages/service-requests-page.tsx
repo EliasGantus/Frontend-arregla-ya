@@ -609,6 +609,7 @@ const ServiceRequestDetailContent = () => {
     },
   });
   const quotes = quotesQuery.data ?? [];
+  const hasAcceptedQuote = quotes.some((quote) => quote.status === 'accepted');
   const canAcceptQuotes =
     request?.availableActions?.includes('accept_quote') ?? false;
   const canBookAcceptedQuote =
@@ -695,60 +696,6 @@ const ServiceRequestDetailContent = () => {
 
       <FlowProgress steps={requestFlowSteps(request.status)} />
 
-      <div className="grid gap-4 md:grid-cols-[1fr_0.8fr]">
-        <Card className="rounded-[28px] bg-white p-4 shadow-lg shadow-slate-200/70 md:rounded-3xl md:p-6">
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
-            Resumen
-          </p>
-          <div className="mt-4 grid gap-3">
-            {[
-              { label: 'Categoria', value: request.category.name },
-              {
-                label: 'Ubicacion',
-                value: `${request.city} / ${request.zone}`,
-              },
-              { label: 'Presupuesto', value: request.budget || 'A convenir' },
-              {
-                label: 'Publicado',
-                value: formatRequestDate(request.createdAt),
-              },
-            ].map((item) => (
-              <div
-                className="rounded-2xl bg-slate-50 px-4 py-3"
-                key={item.label}
-              >
-                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
-                  {item.label}
-                </p>
-                <p className="mt-1 text-sm font-bold text-slate-950">
-                  {item.value}
-                </p>
-              </div>
-            ))}
-          </div>
-        </Card>
-
-        <Card className="rounded-[28px] bg-white p-4 shadow-lg shadow-slate-200/70 md:rounded-3xl md:p-6">
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
-            Estado
-          </p>
-          <h2 className="mt-2 text-xl font-black text-slate-950">
-            {requestProgress[request.status]}
-          </h2>
-          <p className="mt-2 text-sm leading-6 text-slate-600">
-            {isProfessionalView
-              ? 'Revisa el alcance antes de preparar una propuesta para el cliente.'
-              : 'Usa esta vista para seguir el avance y comparar las propuestas que recibas.'}
-          </p>
-          <Link
-            className="mt-5 inline-flex min-h-11 w-full items-center justify-center rounded-2xl bg-accent-500 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-accent-500/30 transition hover:bg-accent-400"
-            to={isProfessionalView ? '/app/cotizaciones' : '/app/solicitudes'}
-          >
-            {isProfessionalView ? 'Cotizar solicitud' : 'Ver solicitudes'}
-          </Link>
-        </Card>
-      </div>
-
       {canReviewQuotes ? (
         <section className="space-y-4">
           {(quotesQuery.error instanceof ApiError ||
@@ -786,38 +733,40 @@ const ServiceRequestDetailContent = () => {
               <Badge>{quotes.length} recibidas</Badge>
             </div>
 
-            <div className="mt-5 grid gap-3 md:grid-cols-3">
-              <label className="space-y-2">
-                <span className="text-sm font-semibold text-slate-700">
-                  Fecha tentativa
-                </span>
-                <Input
-                  type="date"
-                  value={scheduledDate}
-                  onChange={(event) => setScheduledDate(event.target.value)}
-                />
-              </label>
-              <label className="space-y-2">
-                <span className="text-sm font-semibold text-slate-700">
-                  Horario
-                </span>
-                <Input
-                  type="time"
-                  value={scheduledTime}
-                  onChange={(event) => setScheduledTime(event.target.value)}
-                />
-              </label>
-              <label className="space-y-2 md:col-span-1">
-                <span className="text-sm font-semibold text-slate-700">
-                  Notas para la reserva
-                </span>
-                <Input
-                  placeholder="Ej: Coordinar acceso"
-                  value={bookingNotes}
-                  onChange={(event) => setBookingNotes(event.target.value)}
-                />
-              </label>
-            </div>
+            {hasAcceptedQuote && canBookAcceptedQuote ? (
+              <div className="mt-5 grid gap-3 md:grid-cols-3">
+                <label className="space-y-2">
+                  <span className="text-sm font-semibold text-slate-700">
+                    Fecha tentativa
+                  </span>
+                  <Input
+                    type="date"
+                    value={scheduledDate}
+                    onChange={(event) => setScheduledDate(event.target.value)}
+                  />
+                </label>
+                <label className="space-y-2">
+                  <span className="text-sm font-semibold text-slate-700">
+                    Horario
+                  </span>
+                  <Input
+                    type="time"
+                    value={scheduledTime}
+                    onChange={(event) => setScheduledTime(event.target.value)}
+                  />
+                </label>
+                <label className="space-y-2 md:col-span-1">
+                  <span className="text-sm font-semibold text-slate-700">
+                    Notas para la reserva
+                  </span>
+                  <Input
+                    placeholder="Ej: Coordinar acceso"
+                    value={bookingNotes}
+                    onChange={(event) => setBookingNotes(event.target.value)}
+                  />
+                </label>
+              </div>
+            ) : null}
           </Card>
 
           {!quotes.length && !quotesQuery.isLoading ? (
@@ -914,6 +863,60 @@ const ServiceRequestDetailContent = () => {
           </div>
         </section>
       ) : null}
+
+      <div className="grid gap-4 md:grid-cols-[1fr_0.8fr]">
+        <Card className="rounded-[28px] bg-white p-4 shadow-lg shadow-slate-200/70 md:rounded-3xl md:p-6">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
+            Resumen
+          </p>
+          <div className="mt-4 grid gap-3">
+            {[
+              { label: 'Categoria', value: request.category.name },
+              {
+                label: 'Ubicacion',
+                value: `${request.city} / ${request.zone}`,
+              },
+              { label: 'Presupuesto', value: request.budget || 'A convenir' },
+              {
+                label: 'Publicado',
+                value: formatRequestDate(request.createdAt),
+              },
+            ].map((item) => (
+              <div
+                className="rounded-2xl bg-slate-50 px-4 py-3"
+                key={item.label}
+              >
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
+                  {item.label}
+                </p>
+                <p className="mt-1 text-sm font-bold text-slate-950">
+                  {item.value}
+                </p>
+              </div>
+            ))}
+          </div>
+        </Card>
+
+        <Card className="rounded-[28px] bg-white p-4 shadow-lg shadow-slate-200/70 md:rounded-3xl md:p-6">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
+            Estado
+          </p>
+          <h2 className="mt-2 text-xl font-black text-slate-950">
+            {requestProgress[request.status]}
+          </h2>
+          <p className="mt-2 text-sm leading-6 text-slate-600">
+            {isProfessionalView
+              ? 'Revisa el alcance antes de preparar una propuesta para el cliente.'
+              : 'Usa esta vista para seguir el avance y comparar las propuestas que recibas.'}
+          </p>
+          <Link
+            className="mt-5 inline-flex min-h-11 w-full items-center justify-center rounded-2xl bg-accent-500 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-accent-500/30 transition hover:bg-accent-400"
+            to={isProfessionalView ? '/app/cotizaciones' : '/app/solicitudes'}
+          >
+            {isProfessionalView ? 'Cotizar solicitud' : 'Ver solicitudes'}
+          </Link>
+        </Card>
+      </div>
     </div>
   );
 };

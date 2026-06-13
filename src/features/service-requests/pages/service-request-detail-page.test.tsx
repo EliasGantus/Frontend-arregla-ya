@@ -161,6 +161,19 @@ describe('ServiceRequestDetailPage', () => {
     vi.resetAllMocks();
   });
 
+  it('muestra la decision de cotizaciones antes del resumen operativo', async () => {
+    renderPage();
+
+    const quoteHeading = await screen.findByRole('heading', {
+      name: 'Propuestas recibidas',
+    });
+    const summaryHeading = screen.getByText('Resumen');
+
+    expect(quoteHeading.compareDocumentPosition(summaryHeading)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+  });
+
   it('permite reservar una cotizacion recibida desde el detalle de solicitud', async () => {
     quotesServiceMock.listForRequest.mockResolvedValue([
       {
