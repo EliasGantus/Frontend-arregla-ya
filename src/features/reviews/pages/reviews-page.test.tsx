@@ -122,8 +122,8 @@ describe('ReviewsPage', () => {
       await screen.findByText('Gracias por calificar el servicio'),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole('button', { name: 'Volver a reservas' }),
-    ).toBeInTheDocument();
+      screen.getAllByRole('button', { name: 'Volver a reservas' }).length,
+    ).toBeGreaterThan(0);
     expect(reviewsServiceMock.create.mock.calls[0]?.[0]).toEqual({
       bookingId: 'booking-1',
       rating: 5,
@@ -194,5 +194,18 @@ describe('ReviewsPage', () => {
         }),
       ).not.toBeInTheDocument(),
     );
+  });
+
+  it('presenta estrellas grandes y comentario opcional para mobile', async () => {
+    renderPage();
+
+    await screen.findByText('Cambio de termica');
+    expect(screen.getByRole('radio', { name: '5 estrellas' })).toHaveClass(
+      'h-12',
+    );
+    expect(screen.getByLabelText('Comentario opcional')).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Enviar resena' }),
+    ).toBeInTheDocument();
   });
 });

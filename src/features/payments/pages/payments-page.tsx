@@ -16,6 +16,12 @@ import { Badge } from '@/shared/ui/badge';
 import { Button } from '@/shared/ui/button';
 import { Card } from '@/shared/ui/card';
 import { Input } from '@/shared/ui/input';
+import {
+  MobileHero,
+  MobilePage,
+  MobileSection,
+  MobileStats,
+} from '@/shared/ui/mobile-page';
 import { Select } from '@/shared/ui/select';
 import { StatusPanel } from '@/shared/ui/status-panel';
 import { SuccessState } from '@/shared/ui/success-state';
@@ -132,7 +138,7 @@ export const PaymentsPage = () => {
   ];
 
   return (
-    <div className="space-y-4 md:space-y-6">
+    <MobilePage>
       <div className="hidden md:block">
         <StatusPanel
           eyebrow="Pagos"
@@ -141,24 +147,12 @@ export const PaymentsPage = () => {
         />
       </div>
 
-      <Card className="rounded-[28px] !bg-ink p-5 text-white shadow-lg shadow-slate-300/70 md:hidden">
-        <div className="space-y-4">
-          <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-accent-200">
-              Pagos
-            </p>
-            <h1 className="mt-2 text-2xl font-black leading-tight">
-              Pago seguro con MercadoPago
-            </h1>
-            <p className="mt-2 text-sm leading-6 text-slate-200">
-              Selecciona el servicio, el monto y genera tu comprobante.
-            </p>
-          </div>
-          <div className="w-fit rounded-full bg-white px-3 py-1 text-xs font-black uppercase tracking-[0.14em] text-ink">
-            {payableBookings.length} servicios
-          </div>
-        </div>
-      </Card>
+      <MobileHero
+        eyebrow="Pagos"
+        title="Paga el servicio"
+        description="Confirma el servicio, ingresa el monto y genera tu comprobante."
+        badge={`${payableBookings.length} servicios`}
+      />
 
       {errorMessage ? (
         <Card className="rounded-[28px] border border-red-200 bg-red-50 md:rounded-3xl">
@@ -211,38 +205,28 @@ export const PaymentsPage = () => {
         </div>
       ) : null}
 
-      <section className="rounded-[28px] bg-white p-4 shadow-lg shadow-slate-200/70 md:rounded-3xl md:p-6">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400 md:hidden">
-              Resumen
-            </p>
-            <h2 className="text-xl font-black text-slate-950 md:text-xl">
-              Estado de pagos
-            </h2>
-            <p className="mt-1 text-sm text-slate-500">
-              Revisa servicios pagables, comprobantes y total aprobado.
-            </p>
-          </div>
-          <Badge>{payments.length} registros</Badge>
-        </div>
+      <MobileSection
+        eyebrow="Resumen"
+        title="Estado de pagos"
+        description="Revisa servicios pagables, comprobantes y total aprobado."
+        badge={<Badge>{payments.length} registros</Badge>}
+      >
+        <Card className="rounded-[28px] bg-white p-4 shadow-lg shadow-slate-200/70 md:rounded-3xl md:p-6">
+          <MobileStats stats={paymentStats} />
+        </Card>
+      </MobileSection>
 
-        <div className="mt-4 grid grid-cols-3 gap-2">
-          {paymentStats.map((stat) => (
-            <div
-              className="rounded-2xl bg-slate-50 px-2 py-3 text-center"
-              key={stat.label}
-            >
-              <p className="break-words text-base font-black text-slate-950">
-                {stat.value}
-              </p>
-              <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-400">
-                {stat.label}
-              </p>
-            </div>
-          ))}
-        </div>
-      </section>
+      {!payableBookings.length && !bookingsQuery.isLoading ? (
+        <Card className="rounded-[28px] bg-white p-5 text-center shadow-lg shadow-slate-200/70 md:rounded-3xl">
+          <h3 className="text-lg font-black text-slate-950">
+            No tenes servicios listos para pagar
+          </h3>
+          <p className="mt-2 text-sm leading-6 text-slate-600">
+            Cuando un trabajo quede habilitado para pago, lo vas a ver aca con
+            su monto y comprobante.
+          </p>
+        </Card>
+      ) : null}
 
       <div className="grid gap-4 lg:grid-cols-[1fr_0.8fr]">
         <Card className="rounded-[28px] bg-white p-4 shadow-lg shadow-slate-200/70 md:rounded-3xl md:p-6">
@@ -412,6 +396,6 @@ export const PaymentsPage = () => {
           </Card>
         ))}
       </div>
-    </div>
+    </MobilePage>
   );
 };
