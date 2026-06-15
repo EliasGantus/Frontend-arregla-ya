@@ -106,6 +106,41 @@ describe('AppShell', () => {
     ).not.toBeInTheDocument();
   });
 
+  it('mantiene reservas accesible en la navegacion mobile profesional', () => {
+    useAuthMock.mockReturnValue({
+      user: {
+        id: '2',
+        email: 'pro@arreglaya.com',
+        fullName: 'Pro Demo',
+        role: 'profesional',
+      },
+      accessToken: 'token',
+      refreshToken: 'refresh',
+      isAuthenticated: true,
+      isBootstrapping: false,
+      login: vi.fn(),
+      register: vi.fn(),
+      logout: vi.fn(),
+      updateUser: vi.fn(),
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/app/cotizaciones']}>
+        <Routes>
+          <Route path="/app" element={<AppShell />}>
+            <Route path="cotizaciones" element={<p>Cotizaciones</p>} />
+          </Route>
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    const mobileNav = screen.getByLabelText('Navegacion principal mobile');
+
+    expect(
+      within(mobileNav).getByRole('link', { name: 'Reservas' }),
+    ).toHaveAttribute('href', '/app/reservas');
+  });
+
   it('muestra el titulo mobile de calificaciones sin caer en Panel', () => {
     useAuthMock.mockReturnValue({
       user: {
