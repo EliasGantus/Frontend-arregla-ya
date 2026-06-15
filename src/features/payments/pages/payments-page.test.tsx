@@ -196,4 +196,16 @@ describe('PaymentsPage', () => {
       ).not.toBeInTheDocument(),
     );
   });
+
+  it('mantiene el pago enfocado en servicio, monto y accion principal', async () => {
+    renderPage();
+
+    expect(await screen.findByText('Cambio de termica')).toBeInTheDocument();
+    expect(screen.getByLabelText('Servicio a pagar')).toBeInTheDocument();
+    expect(screen.getByLabelText('Monto')).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Confirmar pago' }),
+    ).toBeInTheDocument();
+    expect(screen.getByText('Resumen del servicio')).toBeInTheDocument();
+  });
 });

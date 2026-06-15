@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { PropsWithChildren } from 'react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, useLocation } from 'react-router-dom';
 
 import { adminService } from '@/features/admin/services/admin-service';
 import { useAuth } from '@/features/auth/context/auth-context';
@@ -33,17 +33,26 @@ vi.mock('@/features/quotes/services/quotes-service', () => ({
   },
 }));
 
-vi.mock('@/features/service-requests/services/service-requests-service', () => ({
-  serviceRequestsService: {
-    list: vi.fn(),
-  },
-}));
+vi.mock(
+  '@/features/service-requests/services/service-requests-service',
+  () => ({
+    serviceRequestsService: {
+      list: vi.fn(),
+    },
+  }),
+);
 
 const adminServiceMock = vi.mocked(adminService);
 const bookingsServiceMock = vi.mocked(bookingsService);
 const quotesServiceMock = vi.mocked(quotesService);
 const serviceRequestsServiceMock = vi.mocked(serviceRequestsService);
 const useAuthMock = vi.mocked(useAuth);
+
+const LocationProbe = () => {
+  const location = useLocation();
+
+  return <span data-testid="location">{location.pathname}</span>;
+};
 
 const TestProviders = ({ children }: PropsWithChildren) => {
   const queryClient = new QueryClient({
@@ -56,7 +65,10 @@ const TestProviders = ({ children }: PropsWithChildren) => {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter>{children}</MemoryRouter>
+      <MemoryRouter>
+        <LocationProbe />
+        {children}
+      </MemoryRouter>
     </QueryClientProvider>
   );
 };
@@ -68,7 +80,9 @@ const renderPage = () =>
     </TestProviders>,
   );
 
-const serviceRequest = (status: 'open' | 'quoted' | 'assigned' | 'completed' | 'cancelled') => ({
+const serviceRequest = (
+  status: 'open' | 'quoted' | 'assigned' | 'completed' | 'cancelled',
+) => ({
   id: `request-${status}`,
   title: `Solicitud ${status}`,
   description: 'Descripcion de prueba',
@@ -88,7 +102,9 @@ const serviceRequest = (status: 'open' | 'quoted' | 'assigned' | 'completed' | '
   createdAt: '2026-06-01T10:00:00.000Z',
 });
 
-const booking = (status: 'pending' | 'confirmed' | 'completed' | 'cancelled') => ({
+const booking = (
+  status: 'pending' | 'confirmed' | 'completed' | 'cancelled',
+) => ({
   id: `booking-${status}`,
   serviceRequestId: 'request-1',
   serviceRequestTitle: 'Solicitud',
@@ -156,7 +172,10 @@ describe('DashboardPage', () => {
       serviceRequest('completed'),
       serviceRequest('cancelled'),
     ]);
-    bookingsServiceMock.list.mockResolvedValue([booking('pending'), booking('completed')]);
+    bookingsServiceMock.list.mockResolvedValue([
+      booking('pending'),
+      booking('completed'),
+    ]);
 
     renderPage();
 
@@ -164,6 +183,88 @@ describe('DashboardPage', () => {
     await waitFor(() => expect(screen.getByText('02')).toBeInTheDocument());
     expect(screen.getAllByText('01')).toHaveLength(2);
     expect(screen.getByText('Reservas activas')).toBeInTheDocument();
+  });
+
+  it('prioriza la proxima accion del cliente antes que las metricas', async () => {
+    useAuthMock.mockReturnValue({
+      user: {
+        id: 'client-1',
+        email: 'cliente@arreglaya.com',
+        fullName: 'Cliente Demo',
+        role: 'cliente',
+      },
+      accessToken: 'token',
+      refreshToken: 'refresh',
+      isAuthenticated: true,
+      isBootstrapping: false,
+      login: vi.fn(),
+      register: vi.fn(),
+      logout: vi.fn(),
+      updateUser: vi.fn(),
+    });
+    serviceRequestsServiceMock.list.mockResolvedValue([
+      {
+        ...serviceRequest('quoted'),
+        title: 'Arreglo de canilla',
+        nextStep: {
+          action: 'accept_quote',
+          label: 'Comparar cotizaciones',
+          description: 'Acepta una propuesta para coordinar fecha y horario.',
+        },
+      },
+    ]);
+    bookingsServiceMock.list.mockResolvedValue([]);
+
+    renderPage();
+
+    expect(
+      await screen.findByText('Comparar cotizaciones'),
+    ).toBeInTheDocument();
+    expect(screen.getByText('Arreglo de canilla')).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Ver solicitud' }),
+    ).toBeInTheDocument();
+  });
+
+  it('dirige la proxima accion de pago del cliente a pagos', async () => {
+    useAuthMock.mockReturnValue({
+      user: {
+        id: 'client-1',
+        email: 'cliente@arreglaya.com',
+        fullName: 'Cliente Demo',
+        role: 'cliente',
+      },
+      accessToken: 'token',
+      refreshToken: 'refresh',
+      isAuthenticated: true,
+      isBootstrapping: false,
+      login: vi.fn(),
+      register: vi.fn(),
+      logout: vi.fn(),
+      updateUser: vi.fn(),
+    });
+    serviceRequestsServiceMock.list.mockResolvedValue([]);
+    bookingsServiceMock.list.mockResolvedValue([
+      {
+        ...booking('confirmed'),
+        serviceRequestTitle: 'Instalacion electrica',
+        availableActions: ['pay'],
+        nextStep: {
+          action: 'pay',
+          label: 'Pagar reserva',
+          description: 'Completa el pago para confirmar el trabajo.',
+        },
+      },
+    ]);
+
+    renderPage();
+
+    expect(await screen.findByText('Pagar reserva')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Ver reserva' }));
+
+    await waitFor(() =>
+      expect(screen.getByTestId('location')).toHaveTextContent('/app/pagos'),
+    );
   });
 
   it('muestra metricas reales para profesional', async () => {
@@ -188,11 +289,16 @@ describe('DashboardPage', () => {
       quote('pending'),
       quote('rejected'),
     ]);
-    bookingsServiceMock.list.mockResolvedValue([booking('confirmed'), booking('completed')]);
+    bookingsServiceMock.list.mockResolvedValue([
+      booking('confirmed'),
+      booking('completed'),
+    ]);
 
     renderPage();
 
-    expect(await screen.findByText('Cotizaciones enviadas')).toBeInTheDocument();
+    expect(
+      await screen.findByText('Cotizaciones enviadas'),
+    ).toBeInTheDocument();
     await waitFor(() => expect(screen.getByText('03')).toBeInTheDocument());
     expect(screen.getByText('01')).toBeInTheDocument();
     expect(screen.getByText('33%')).toBeInTheDocument();

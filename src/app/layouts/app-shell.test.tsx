@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 
 import { AppShell } from '@/app/layouts/app-shell';
@@ -49,5 +49,102 @@ describe('AppShell', () => {
     expect(
       screen.getAllByRole('link', { name: 'Cotizaciones' }).length,
     ).toBeGreaterThan(0);
+  });
+
+  it('prioriza la navegacion mobile del cliente sin mostrar rutas secundarias', () => {
+    useAuthMock.mockReturnValue({
+      user: {
+        id: '1',
+        email: 'cliente@arreglaya.com',
+        fullName: 'Cliente Demo',
+        role: 'cliente',
+      },
+      accessToken: 'token',
+      refreshToken: 'refresh',
+      isAuthenticated: true,
+      isBootstrapping: false,
+      login: vi.fn(),
+      register: vi.fn(),
+      logout: vi.fn(),
+      updateUser: vi.fn(),
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/app/solicitudes/request-1']}>
+        <Routes>
+          <Route path="/app" element={<AppShell />}>
+            <Route path="solicitudes/:requestId" element={<p>Detalle</p>} />
+          </Route>
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    const mobileNav = screen.getByLabelText('Navegacion principal mobile');
+    const mobileHeader = screen
+      .getAllByRole('banner')
+      .find((header) => within(header).queryByText('Cliente Demo'));
+
+    if (!mobileHeader) {
+      throw new Error('No se encontro el header mobile');
+    }
+
+    expect(within(mobileHeader).getByText('Solicitudes')).toBeInTheDocument();
+    expect(
+      within(mobileNav).getAllByRole('link', { name: /Inicio/ }),
+    ).not.toHaveLength(0);
+    expect(
+      within(mobileNav).getAllByRole('link', { name: /Solicitudes/ }),
+    ).not.toHaveLength(0);
+    expect(
+      within(mobileNav).getAllByRole('link', { name: /Reservas/ }),
+    ).not.toHaveLength(0);
+    expect(
+      within(mobileNav).getAllByRole('link', { name: /Perfil/ }),
+    ).not.toHaveLength(0);
+    expect(
+      within(mobileNav).queryByRole('link', { name: 'Cotizaciones' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('muestra el titulo mobile de calificaciones sin caer en Panel', () => {
+    useAuthMock.mockReturnValue({
+      user: {
+        id: '1',
+        email: 'cliente@arreglaya.com',
+        fullName: 'Cliente Demo',
+        role: 'cliente',
+      },
+      accessToken: 'token',
+      refreshToken: 'refresh',
+      isAuthenticated: true,
+      isBootstrapping: false,
+      login: vi.fn(),
+      register: vi.fn(),
+      logout: vi.fn(),
+      updateUser: vi.fn(),
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/app/calificaciones']}>
+        <Routes>
+          <Route path="/app" element={<AppShell />}>
+            <Route path="calificaciones" element={<p>Reviews</p>} />
+          </Route>
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    const mobileHeader = screen
+      .getAllByRole('banner')
+      .find((header) => within(header).queryByText('Cliente Demo'));
+
+    if (!mobileHeader) {
+      throw new Error('No se encontro el header mobile');
+    }
+
+    expect(
+      within(mobileHeader).getByText('Calificaciones'),
+    ).toBeInTheDocument();
+    expect(within(mobileHeader).queryByText('Panel')).not.toBeInTheDocument();
   });
 });

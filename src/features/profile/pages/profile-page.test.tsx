@@ -135,6 +135,23 @@ describe('ProfilePage', () => {
     expect(screen.getAllByText('11 5555 5555').length).toBeGreaterThan(0);
   });
 
+  it('muestra el perfil cliente como pantalla utilitaria mobile', async () => {
+    mockAuth(clientUser);
+    profileServiceMock.me.mockResolvedValue(clientUser);
+
+    renderPage();
+
+    expect(await screen.findByText('Lucia Benitez')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Editar perfil' })).toHaveAttribute(
+      'href',
+      '#editar-perfil',
+    );
+    expect(
+      screen.getByRole('button', { name: 'Cerrar sesion' }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText('Profesional')).not.toBeInTheDocument();
+  });
+
   it('muestra validaciones cuando faltan campos obligatorios', async () => {
     mockAuth(clientUser);
     profileServiceMock.me.mockResolvedValue(clientUser);

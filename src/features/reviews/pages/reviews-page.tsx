@@ -13,6 +13,7 @@ import { reviewSchema, type ReviewFormValues } from '@/shared/types/contracts';
 import { Badge } from '@/shared/ui/badge';
 import { Button } from '@/shared/ui/button';
 import { Card } from '@/shared/ui/card';
+import { MobileHero, MobilePage } from '@/shared/ui/mobile-page';
 import { Select } from '@/shared/ui/select';
 import { StatusPanel } from '@/shared/ui/status-panel';
 import { SuccessState } from '@/shared/ui/success-state';
@@ -114,7 +115,7 @@ export const ReviewsPage = () => {
       : 'Pendiente';
 
   return (
-    <div className="space-y-5 pb-24 md:space-y-6 md:pb-0">
+    <MobilePage className="space-y-5 md:space-y-6">
       <div className="hidden md:block">
         <StatusPanel
           eyebrow="Calificaciones"
@@ -134,47 +135,23 @@ export const ReviewsPage = () => {
         />
       </div>
 
-      <section className="overflow-hidden rounded-[2rem] bg-slate-950 p-5 text-white shadow-2xl shadow-slate-300/50 md:hidden">
-        <div className="flex items-start justify-between gap-4">
-          <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-brand-200">
-              Calificaciones
-            </p>
-            <h1 className="mt-3 text-3xl font-black leading-none">
-              Tu experiencia
-            </h1>
-            <p className="mt-3 text-sm leading-6 text-slate-200">
-              Elegi un servicio completado, puntua al profesional y comparti una
-              resena.
-            </p>
-          </div>
+      <MobileHero
+        eyebrow="Calificaciones"
+        title="Califica el servicio"
+        description="Elegi estrellas, agrega un comentario si queres y publica tu experiencia."
+        badge={reviewState}
+        action={
           <Button
-            className="shrink-0 border-white/10 bg-white/10 px-3 py-2 text-xs text-white hover:bg-white/20"
+            className="w-full border-white/10 bg-white/10 text-white hover:bg-white/20"
             variant="ghost"
             onClick={() => {
               void navigate('/app/reservas');
             }}
           >
-            Historial
+            Volver a reservas
           </Button>
-        </div>
-        <div className="mt-6 grid grid-cols-2 gap-3">
-          <div className="rounded-3xl border border-white/10 bg-white/10 p-3">
-            <p className="text-2xl font-black leading-none">
-              {reviewableBookings.length}
-            </p>
-            <p className="mt-1 text-xs font-semibold uppercase tracking-[0.12em] text-slate-300">
-              Servicios
-            </p>
-          </div>
-          <div className="rounded-3xl border border-white/10 bg-white/10 p-3">
-            <p className="text-lg font-black leading-none">{reviewState}</p>
-            <p className="mt-1 text-xs font-semibold uppercase tracking-[0.12em] text-slate-300">
-              Estado
-            </p>
-          </div>
-        </div>
-      </section>
+        }
+      />
 
       {bookingsQuery.error instanceof ApiError ||
       reviewsQuery.error instanceof ApiError ? (
@@ -402,6 +379,6 @@ export const ReviewsPage = () => {
           )}
         </Card>
       </div>
-    </div>
+    </MobilePage>
   );
 };
