@@ -215,6 +215,18 @@ describe('ServiceRequestsPage', () => {
     expect(screen.getAllByRole('link', { name: 'Ver detalle' })).toHaveLength(2);
   });
 
+  it('usa un selector de barrios para la zona de una nueva solicitud', async () => {
+    serviceRequestsServiceMock.list.mockResolvedValue([]);
+
+    renderPage();
+
+    const zoneSelect = await screen.findByRole('combobox', { name: 'Zona' });
+
+    expect(zoneSelect).toHaveDisplayValue('Selecciona un barrio');
+    expect(screen.queryByRole('textbox', { name: 'Zona' })).not.toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Villa Crespo' })).toBeInTheDocument();
+  });
+
   it('oculta accion de cotizar a profesionales cuando la solicitud no permite crear cotizacion', async () => {
     useAuthMock.mockReturnValue({
       user: {

@@ -110,6 +110,11 @@ describe('ProfilePage', () => {
     renderPage();
 
     await screen.findByDisplayValue('Lucia Benitez');
+    const zoneSelect = screen.getByRole('combobox', { name: 'Zona' });
+
+    expect(zoneSelect).toHaveDisplayValue('Caballito');
+    expect(screen.queryByRole('textbox', { name: 'Zona' })).not.toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Palermo' })).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText('Nombre completo'), {
       target: { value: 'Lucia Fernandez' },
     });
@@ -188,6 +193,9 @@ describe('ProfilePage', () => {
 
     await screen.findByDisplayValue('Carlos Mendoza');
     await screen.findByText('Plomeria');
+    expect(screen.getByRole('combobox', { name: 'Zona' })).toHaveDisplayValue(
+      'Almagro',
+    );
     fireEvent.change(screen.getByLabelText('Telefono'), {
       target: { value: '11 4444 4444' },
     });

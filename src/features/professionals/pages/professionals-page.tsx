@@ -26,6 +26,7 @@ import { Badge } from '@/shared/ui/badge';
 import { Button } from '@/shared/ui/button';
 import { Card } from '@/shared/ui/card';
 import { Input } from '@/shared/ui/input';
+import { NeighborhoodSelect } from '@/shared/ui/neighborhood-select';
 import { Select } from '@/shared/ui/select';
 import { StatusPanel } from '@/shared/ui/status-panel';
 
@@ -269,8 +270,7 @@ const ProfessionalsSearchContent = () => {
 
           <label className="space-y-2">
             <span className="text-sm font-semibold text-slate-700">Zona</span>
-            <Input
-              placeholder="Palermo"
+            <NeighborhoodSelect
               error={errors.zone?.message}
               {...register('zone')}
             />
