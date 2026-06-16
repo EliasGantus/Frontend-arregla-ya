@@ -126,6 +126,32 @@ describe('BookingsPage', () => {
     ]);
   });
 
+  it('explica al cliente que la reserva pendiente espera confirmacion del profesional', async () => {
+    render(
+      <TestProviders>
+        <MemoryRouter>
+          <BookingsPage />
+        </MemoryRouter>
+      </TestProviders>,
+    );
+
+    expect(await screen.findByText('Arreglo de canilla')).toBeInTheDocument();
+    const nextStepBlock = screen.getByText('Proximo paso').parentElement;
+
+    expect(nextStepBlock).not.toBeNull();
+    expect(
+      within(nextStepBlock as HTMLElement).getByText('Esperando al profesional'),
+    ).toBeInTheDocument();
+    expect(
+      within(nextStepBlock as HTMLElement).getByText(
+        'El profesional debe confirmar el turno antes de que puedas pagar el servicio.',
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Cancelar reserva' }),
+    ).toBeInTheDocument();
+  });
+
   it('permite al profesional marcar un trabajo confirmado como terminado', async () => {
     useAuthMock.mockReturnValue({
       user: {

@@ -2,6 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { useForm } from 'react-hook-form';
+import { Link } from 'react-router-dom';
 
 import { quotesService } from '@/features/quotes/services/quotes-service';
 import { serviceRequestsService } from '@/features/service-requests/services/service-requests-service';
@@ -299,6 +300,20 @@ const QuotesContent = () => {
             <p className="mt-4 text-sm leading-6 text-slate-600">
               {quote.message}
             </p>
+
+            {quote.status === 'accepted' ? (
+              <div className="mt-4 rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3">
+                <p className="text-sm font-semibold text-emerald-900">
+                  El cliente puede haber enviado una fecha para este trabajo.
+                </p>
+                <Link
+                  className="mt-3 inline-flex min-h-11 w-full items-center justify-center rounded-2xl bg-accent-500 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-accent-500/25 transition hover:bg-accent-400 sm:w-auto"
+                  to="/app/reservas"
+                >
+                  Gestionar reserva
+                </Link>
+              </div>
+            ) : null}
           </Card>
         ))}
       </div>

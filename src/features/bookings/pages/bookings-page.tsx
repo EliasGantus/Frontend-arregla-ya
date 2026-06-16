@@ -107,13 +107,6 @@ const resolveBookingNextStepGuidance = (
     });
   }
 
-  if (canCancel(booking, role)) {
-    return {
-      label: 'Reserva pendiente',
-      description: 'Podes cancelar la reserva mientras espera confirmacion.',
-    };
-  }
-
   if (
     booking.nextStep?.action === 'pay' ||
     booking.nextStep?.action === 'review'
@@ -135,8 +128,15 @@ const resolveBookingNextStepGuidance = (
       label: 'Esperando al profesional',
       description:
         booking.nextStep.action === 'confirm_booking'
-          ? 'El profesional debe confirmar el turno.'
+          ? 'El profesional debe confirmar el turno antes de que puedas pagar el servicio.'
           : 'El profesional debe marcar el trabajo como terminado.',
+    };
+  }
+
+  if (canCancel(booking, role)) {
+    return {
+      label: 'Reserva pendiente',
+      description: 'Podes cancelar la reserva mientras espera confirmacion.',
     };
   }
 

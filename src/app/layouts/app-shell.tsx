@@ -127,7 +127,13 @@ const mobileIconByPath: Record<string, ReactNode> = {
 
 const mobilePriorityByRole: Record<UserRole, string[]> = {
   cliente: ['/app', '/app/solicitudes', '/app/reservas', '/app/perfil'],
-  profesional: ['/app', '/app/solicitudes', '/app/cotizaciones', '/app/perfil'],
+  profesional: [
+    '/app',
+    '/app/solicitudes',
+    '/app/cotizaciones',
+    '/app/reservas',
+    '/app/perfil',
+  ],
   admin: ['/app', '/app/admin', '/app/solicitudes', '/app/perfil'],
 };
 
@@ -299,8 +305,12 @@ export const AppShell = () => {
         className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white/95 px-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-2 shadow-2xl shadow-slate-900/15 backdrop-blur md:hidden"
       >
         <div
-          className={`mx-auto grid max-w-md gap-2 ${
-            mobileItems.length >= 4 ? 'grid-cols-4' : 'grid-cols-3'
+          className={`mx-auto grid max-w-md ${
+            mobileItems.length >= 5
+              ? 'grid-cols-5 gap-1'
+              : mobileItems.length >= 4
+                ? 'grid-cols-4 gap-2'
+                : 'grid-cols-3 gap-2'
           }`}
         >
           {mobileItems.map((item) => (
@@ -310,7 +320,9 @@ export const AppShell = () => {
               end={item.to === '/app'}
               className={({ isActive }) =>
                 [
-                  'flex min-h-14 flex-col items-center justify-center rounded-2xl px-2 text-xs font-semibold transition',
+                  `flex min-h-14 flex-col items-center justify-center rounded-2xl font-semibold transition ${
+                    mobileItems.length >= 5 ? 'px-1 text-[11px]' : 'px-2 text-xs'
+                  }`,
                   isActive
                     ? 'bg-accent-50 text-accent-600'
                     : 'text-slate-400 hover:text-slate-700',
