@@ -145,6 +145,11 @@ describe('EmergenciesPage', () => {
     renderPage();
 
     await screen.findByRole('option', { name: 'Plomeria' });
+    const zoneSelect = screen.getByRole('combobox', { name: 'Zona' });
+
+    expect(zoneSelect).toHaveDisplayValue('Palermo');
+    expect(screen.queryByRole('textbox', { name: 'Zona' })).not.toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Villa Crespo' })).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText('Tipo de emergencia'), {
       target: { value: 'cat-plom' },
     });

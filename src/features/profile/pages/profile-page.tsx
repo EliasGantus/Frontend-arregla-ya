@@ -17,6 +17,7 @@ import { Button } from '@/shared/ui/button';
 import { Card } from '@/shared/ui/card';
 import { Input } from '@/shared/ui/input';
 import { MobilePage } from '@/shared/ui/mobile-page';
+import { NeighborhoodSelect } from '@/shared/ui/neighborhood-select';
 import { StatusPanel } from '@/shared/ui/status-panel';
 import { Textarea } from '@/shared/ui/textarea';
 
@@ -385,7 +386,10 @@ export const ProfilePage = () => {
             </label>
             <label className="space-y-2">
               <span className="text-sm font-semibold text-slate-700">Zona</span>
-              <Input error={errors.zone?.message} {...register('zone')} />
+              <NeighborhoodSelect
+                error={errors.zone?.message}
+                {...register('zone')}
+              />
             </label>
             <label className="space-y-2 md:col-span-2">
               <span className="text-sm font-semibold text-slate-700">

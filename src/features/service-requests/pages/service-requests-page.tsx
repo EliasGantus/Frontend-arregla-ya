@@ -32,6 +32,7 @@ import {
   MobileSection,
   MobileStats,
 } from '@/shared/ui/mobile-page';
+import { NeighborhoodSelect } from '@/shared/ui/neighborhood-select';
 import { NextActionPanel } from '@/shared/ui/next-action-panel';
 import { Select } from '@/shared/ui/select';
 import { StatusPanel } from '@/shared/ui/status-panel';
@@ -378,7 +379,10 @@ const ServiceRequestsContent = () => {
               </label>
               <label className="space-y-2">
                 <span className="text-sm font-semibold text-slate-700">Zona</span>
-                <Input error={errors.zone?.message} {...register('zone')} />
+                <NeighborhoodSelect
+                  error={errors.zone?.message}
+                  {...register('zone')}
+                />
               </label>
             </div>
             <div className="space-y-2 md:col-span-2">
